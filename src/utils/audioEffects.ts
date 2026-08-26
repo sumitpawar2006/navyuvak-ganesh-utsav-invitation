@@ -29,9 +29,9 @@ export const playTempleChime = () => {
     const context = createAudioContext();
     if (!context) return;
     const now = context.currentTime;
-    playTone(context, 523.25, now, 1.4, 0.12, 'sine');
-    playTone(context, 783.99, now + 0.08, 1.7, 0.08, 'sine');
-    playTone(context, 1046.5, now + 0.16, 2, 0.055, 'triangle');
+    playTone(context, 523.25, now, 0.72, 0.1, 'sine');
+    playTone(context, 783.99, now + 0.08, 0.88, 0.065, 'sine');
+    playTone(context, 1046.5, now + 0.16, 1.02, 0.045, 'triangle');
   } catch (error) {
     console.warn('Invitation chime could not play.', error);
   }
@@ -43,7 +43,7 @@ export const playCelebrationFanfare = () => {
     if (!context) return;
     const now = context.currentTime;
     [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
-      playTone(context, frequency, now + index * 0.1, 0.9 + index * 0.12, 0.08, index < 2 ? 'triangle' : 'sine');
+      playTone(context, frequency, now + index * 0.1, 0.58 + index * 0.08, 0.07, index < 2 ? 'triangle' : 'sine');
     });
   } catch (error) {
     console.warn('Celebration chime could not play.', error);

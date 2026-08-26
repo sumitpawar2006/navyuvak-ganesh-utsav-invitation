@@ -13,6 +13,7 @@ import {
   RotateCcw,
   ShieldCheck,
   Sparkles,
+  Square,
   Volume2,
   VolumeX,
 } from 'lucide-react';
@@ -22,7 +23,7 @@ import CelebrationOverlay from './components/CelebrationOverlay';
 import InvitationCard, { type RsvpStatus } from './components/InvitationCard';
 import { EVENT, buildInvitationSpeech } from './event';
 import { playCelebrationFanfare, playTempleChime } from './utils/audioEffects';
-import { speakNaturalText } from './utils/naturalVoiceEngine';
+import { cancelNaturalSpeech, primeNaturalVoices, speakNaturalText } from './utils/naturalVoiceEngine';
 
 type AppStep = 'welcome' | 'personalize' | 'invitation';
 
@@ -109,13 +110,14 @@ export default function App() {
   const [rsvp, setRsvp] = useState<RsvpStatus>('pending');
   const recognitionRef = useRef<any>(null);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    primeNaturalVoices();
+
+    return () => {
       recognitionRef.current?.stop?.();
-      window.speechSynthesis?.cancel();
-    },
-    []
-  );
+      cancelNaturalSpeech();
+    };
+  }, []);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
@@ -128,10 +130,11 @@ export default function App() {
     };
   }, [step]);
 
-  const speak = (text: string) => {
+  const speak = (text: string, startDelayMs = 80) => {
     setSubtitle(text);
     speakNaturalText(text, {
       isMuted,
+      startDelayMs,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
     });
@@ -141,13 +144,14 @@ export default function App() {
     playTempleChime();
     setStep('personalize');
     speak(
-      `Ganpati Bappa Morya! Welcome to ${EVENT.mandalName}, ${EVENT.locality}. Please tell us your name so we can prepare your personal invitation.`
+      `Ganpati Bappa Morya! Welcome to ${EVENT.mandalName}, ${EVENT.locality}. Please tell us your name so we can prepare your personal invitation.`,
+      900
     );
   };
 
   const startListening = () => {
     setSpeechError('');
-    window.speechSynthesis?.cancel();
+    cancelNaturalSpeech();
     setIsSpeaking(false);
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -213,7 +217,7 @@ export default function App() {
     else url.searchParams.set('guest', formattedName);
     window.history.replaceState({}, '', url);
 
-    speak(buildInvitationSpeech(formattedName));
+    speak(buildInvitationSpeech(formattedName), 900);
   };
 
   const submitName = (event: FormEvent) => {
@@ -227,7 +231,7 @@ export default function App() {
 
   const reset = () => {
     recognitionRef.current?.stop?.();
-    window.speechSynthesis?.cancel();
+    cancelNaturalSpeech();
     window.history.replaceState({}, '', window.location.pathname);
     setStep('welcome');
     setTypedName('');
@@ -244,7 +248,7 @@ export default function App() {
     const spokenGuest = guestName.replace(/^dear\s+/i, '');
     if (status === 'attending') {
       playCelebrationFanfare();
-      speak(`Thank you, ${spokenGuest}. We are delighted that you will join us. Ganpati Bappa Morya!`);
+      speak(`Thank you, ${spokenGuest}. We are delighted that you will join us. Ganpati Bappa Morya!`, 1250);
     } else if (status === 'not-attending') {
       speak(`Thank you for letting us know, ${spokenGuest}. We will miss your presence and send Bappa's blessings to you and your family.`);
     }
@@ -273,8 +277,7 @@ export default function App() {
           onClick={() => {
             setIsMuted((current) => !current);
             if (!isMuted) {
-              window.speechSynthesis?.cancel();
-              setIsSpeaking(false);
+              cancelNaturalSpeech();
             }
           }}
           aria-label={isMuted ? 'Turn invitation sound on' : 'Mute invitation sound'}
@@ -412,12 +415,17 @@ export default function App() {
                   <button
                     className="compact-button"
                     onClick={() => {
+                      if (isSpeaking) {
+                        cancelNaturalSpeech();
+                        return;
+                      }
                       playTempleChime();
-                      speak(buildInvitationSpeech(guestName));
+                      speak(buildInvitationSpeech(guestName), 900);
                     }}
-                    disabled={isSpeaking}
+                    aria-pressed={isSpeaking}
                   >
-                    <Volume2 aria-hidden="true" /> Hear invitation
+                    {isSpeaking ? <Square aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
+                    {isSpeaking ? 'Stop narration' : 'Hear invitation'}
                   </button>
                   <button className="compact-button" onClick={reset}>
                     <RotateCcw aria-hidden="true" /> Start over
