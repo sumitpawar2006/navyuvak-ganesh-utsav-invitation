@@ -1,0 +1,7 @@
+{
+  "name": "Ganesh Utsav 2026 Invitation",
+  "description": "An interactive invitation from Navyuvak Ganesh Utsav Mandal, Mhada Colony, featuring optional name personalisation, speech recognition and text-to-speech narration.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

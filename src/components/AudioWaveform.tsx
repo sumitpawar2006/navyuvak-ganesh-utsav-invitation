@@ -1,0 +1,21 @@
+import { Mic } from 'lucide-react';
+
+interface AudioWaveformProps {
+  isRecording: boolean;
+}
+
+export default function AudioWaveform({ isRecording }: AudioWaveformProps) {
+  if (!isRecording) return null;
+
+  return (
+    <div className="listening-indicator" role="status" aria-label="Microphone is listening for your name">
+      <span className="listening-mic" aria-hidden="true"><Mic /></span>
+      <span className="voice-bars" aria-hidden="true">
+        {Array.from({ length: 18 }, (_, index) => (
+          <i key={index} style={{ animationDelay: `${(index % 6) * 90}ms` }} />
+        ))}
+      </span>
+      <span className="listening-copy"><strong>Listening now</strong><small>Speak your full name clearly</small></span>
+    </div>
+  );
+}
