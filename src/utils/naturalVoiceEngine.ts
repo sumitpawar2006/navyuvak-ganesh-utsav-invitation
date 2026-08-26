@@ -19,11 +19,10 @@ let startTimer: number | null = null;
 
 const formatForSpeech = (value: string) =>
   value
-    .replace(/\b6:00 PM\b/gi, 'six P M')
+    .replace(/\b6:00 PM\b/gi, 'six in the evening')
     .replace(/\b14 September 2026\b/gi, 'the fourteenth of September, twenty twenty-six')
     .replace(/\bMIDC\b/g, 'M I D C')
     .replace(/\b440016\b/g, 'four four zero zero one six')
-    .replace(/\bMhada\b/gi, 'M H A D A')
     .replace(/\bUtsav\b/gi, 'Ootsav')
     .replace(/\s+/g, ' ')
     .trim();
@@ -75,23 +74,30 @@ export const createSpeechChunks = (rawText: string) => {
 
 const voiceScore = (voice: SpeechSynthesisVoice) => {
   const name = voice.name.toLowerCase();
-  const language = voice.lang.toLowerCase();
   let score = 0;
 
-  if (language === 'en-in') score += 180;
-  else if (language.startsWith('en')) score += 40;
-  if (/natural|neural|wavenet|online|enhanced|premium/.test(name)) score += 170;
-  if (/neerja|prabhat|ravi|heera|veena|india/.test(name)) score += 90;
-  if (/google|microsoft|apple|samantha|serena|aria/.test(name)) score += 45;
-  if (/desktop|compact|espeak/.test(name)) score -= 180;
+  if (/natural|neural|wavenet|online|enhanced|premium/.test(name)) score += 300;
+  if (/neerja/.test(name)) score += 180;
+  if (/prabhat/.test(name)) score += 160;
+  if (/google/.test(name)) score += 100;
+  if (/microsoft/.test(name)) score += 90;
+  if (/heera|veena|ravi/.test(name)) score += 70;
+  if (!voice.localService) score += 40;
+  if (/desktop|compact|espeak/.test(name)) score -= 220;
 
   return score;
+};
+
+const isIndianEnglishVoice = (voice: SpeechSynthesisVoice) => {
+  const language = voice.lang.toLowerCase().replace('_', '-');
+  const name = voice.name.toLowerCase();
+  return language === 'en-in' || /english\s*\(?india\)?|india.*english/.test(name);
 };
 
 export const getBestNaturalVoices = () => {
   if (!window.speechSynthesis) return [];
   return [...window.speechSynthesis.getVoices()]
-    .filter((voice) => voice.lang.toLowerCase().startsWith('en'))
+    .filter(isIndianEnglishVoice)
     .sort((first, second) => voiceScore(second) - voiceScore(first));
 };
 
@@ -172,14 +178,16 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
     }
 
     const selectedVoice = voices[0];
+    const selectedVoiceName = selectedVoice?.name.toLowerCase() ?? '';
+    const hasNaturalVoice = /natural|neural|wavenet|online|enhanced|premium/.test(selectedVoiceName);
     let completedChunks = 0;
 
     activeUtterances = chunks.map((chunk) => {
       const utterance = new SpeechSynthesisUtterance(chunk);
       let chunkCompleted = false;
       if (selectedVoice) utterance.voice = selectedVoice;
-      utterance.lang = selectedVoice?.lang || 'en-IN';
-      utterance.rate = 0.88;
+      utterance.lang = 'en-IN';
+      utterance.rate = hasNaturalVoice ? 0.92 : 0.88;
       utterance.pitch = 1;
       utterance.volume = 1;
 

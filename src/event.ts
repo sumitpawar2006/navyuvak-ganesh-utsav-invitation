@@ -23,7 +23,7 @@ const escapeCalendarText = (value: string) =>
 const addressName = (guestName: string) => guestName.replace(/^dear\s+/i, '');
 
 export const buildInvitationSpeech = (guestName: string) =>
-  `Ganpati Bappa Morya! Dear ${addressName(guestName)}, ${EVENT.mandalName}, ${EVENT.locality}, cordially invites you and your family to ${EVENT.title}. Please join us on ${EVENT.dateDisplay} at ${EVENT.timeDisplay}, at ${EVENT.venueName}, ${EVENT.address}. Your presence and blessings will make our celebration truly special.`;
+  `Ganpati Bappa Morya! Dear ${addressName(guestName)}, it gives us immense joy to invite you and your family to ${EVENT.title}, hosted by ${EVENT.mandalName}, ${EVENT.locality}. Please join us on ${EVENT.dateDisplay}, at ${EVENT.timeDisplay}. The celebration will be held at ${EVENT.venueName}, ${EVENT.address}. Your presence and blessings will make this celebration truly special. We look forward to welcoming you. Ganpati Bappa Morya!`;
 
 export const buildCalendarFile = (guestName: string) => {
   const description = `Dear ${addressName(guestName)}, you and your family are cordially invited by ${EVENT.mandalName}, ${EVENT.locality}. Coordinator: ${EVENT.coordinator}, ${EVENT.phoneDisplay}.`;
