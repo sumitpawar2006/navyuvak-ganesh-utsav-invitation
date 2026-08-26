@@ -30,13 +30,16 @@ type AppStep = 'welcome' | 'personalize' | 'invitation';
 const cleanGuestName = (value: string) =>
   value
     .trim()
-    .replace(/^(hello|hi|hey|namaste)\s+/i, '')
-    .replace(/^(my name is|i am|i'm|this is|myself)\s+/i, '')
-    .replace(/[!?.,]+$/g, '')
+    .replace(/^(नमस्कार|हॅलो|हाय)\s+/u, '')
+    .replace(/^(माझे नाव आहे|माझं नाव आहे|माझे नाव|माझं नाव|मी)\s+/u, '')
+    .replace(/[!?.,।]+$/g, '')
     .replace(/\s+/g, ' ')
     .split(' ')
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .map((part) => (/^[a-z]/i.test(part) ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part))
     .join(' ');
+
+const formatCount = (value: number) =>
+  value.toLocaleString('mr-IN', { minimumIntegerDigits: 2, useGrouping: false });
 
 function EventCountdown() {
   const eventTime = useMemo(() => new Date(EVENT.dateTimeISO).getTime(), []);
@@ -54,22 +57,22 @@ function EventCountdown() {
 
   if (remaining === 0) {
     return (
-      <div className="countdown-card" aria-label="The celebration date has arrived">
+      <div className="countdown-card" aria-label="उत्सवाचा दिवस आला आहे">
         <Sparkles aria-hidden="true" />
-        <span>The celebration has arrived</span>
+        <span>उत्सवाचा दिवस आला आहे</span>
       </div>
     );
   }
 
   return (
-    <div className="countdown-card" aria-label={`${days} days, ${hours} hours and ${minutes} minutes until the celebration`}>
+    <div className="countdown-card" aria-label={`उत्सवासाठी ${days} दिवस, ${hours} तास आणि ${minutes} मिनिटे शिल्लक`}>
       {[
-        ['Days', days],
-        ['Hours', hours],
-        ['Minutes', minutes],
+        ['दिवस', days],
+        ['तास', hours],
+        ['मिनिटे', minutes],
       ].map(([label, value]) => (
         <div key={label} className="countdown-unit">
-          <strong>{String(value).padStart(2, '0')}</strong>
+          <strong>{formatCount(value as number)}</strong>
           <span>{label}</span>
         </div>
       ))}
@@ -99,9 +102,9 @@ export default function App() {
 
   const [step, setStep] = useState<AppStep>(sharedGuest ? 'invitation' : 'welcome');
   const [typedName, setTypedName] = useState(sharedGuest);
-  const [guestName, setGuestName] = useState(sharedGuest || 'Dear Devotee');
+  const [guestName, setGuestName] = useState(sharedGuest || 'प्रिय भाविक');
   const [subtitle, setSubtitle] = useState(
-    sharedGuest ? `A personal invitation has arrived for ${sharedGuest}.` : 'A devotional celebration awaits.'
+    sharedGuest ? `${sharedGuest} यांच्यासाठी वैयक्तिक आमंत्रण आले आहे.` : 'बाप्पाच्या मंगलमय उत्सवाची वाट पाहत आहोत.'
   );
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -144,7 +147,7 @@ export default function App() {
     playTempleChime();
     setStep('personalize');
     speak(
-      `Ganpati Bappa Morya! Welcome to ${EVENT.mandalName}, ${EVENT.locality}. Please tell us your name so we can prepare your personal invitation.`,
+      `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`,
       900
     );
   };
@@ -156,21 +159,21 @@ export default function App() {
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      setSpeechError('Voice input is not available in this browser. Please type your name instead.');
+      setSpeechError('या ब्राउझरमध्ये आवाजातून नाव देण्याची सुविधा उपलब्ध नाही. कृपया आपले नाव टाइप करा.');
       return;
     }
 
     recognitionRef.current?.stop?.();
     const recognition = new SpeechRecognition();
     recognitionRef.current = recognition;
-    recognition.lang = 'en-IN';
+    recognition.lang = 'mr-IN';
     recognition.interimResults = true;
     recognition.continuous = false;
     recognition.maxAlternatives = 3;
 
     recognition.onstart = () => {
       setIsListening(true);
-      setSubtitle('Listening for your name…');
+      setSubtitle('आपले नाव ऐकत आहे…');
     };
 
     recognition.onresult = (event: any) => {
@@ -186,34 +189,34 @@ export default function App() {
       setIsListening(false);
       setSpeechError(
         event.error === 'not-allowed'
-          ? 'Microphone access was blocked. You can still type your name below.'
-          : 'We could not hear your name clearly. Please try again or type it below.'
+          ? 'मायक्रोफोनची परवानगी मिळाली नाही. आपण खाली आपले नाव टाइप करू शकता.'
+          : 'आपले नाव स्पष्ट ऐकू आले नाही. कृपया पुन्हा प्रयत्न करा किंवा खाली नाव टाइप करा.'
       );
     };
 
     recognition.onend = () => {
       setIsListening(false);
-      setSubtitle('Name captured. Review it below and continue.');
+      setSubtitle('नाव नोंदवले आहे. कृपया तपासून पुढे जा.');
     };
 
     try {
       recognition.start();
     } catch {
       setIsListening(false);
-      setSpeechError('Voice input could not start. Please type your name instead.');
+      setSpeechError('आवाजातून नाव नोंदवता आले नाही. कृपया आपले नाव टाइप करा.');
     }
   };
 
   const revealInvitation = (name: string) => {
-    const formattedName = cleanGuestName(name) || 'Dear Devotee';
+    const formattedName = cleanGuestName(name) || 'प्रिय भाविक';
     setGuestName(formattedName);
-    setTypedName(formattedName === 'Dear Devotee' ? '' : formattedName);
+    setTypedName(formattedName === 'प्रिय भाविक' ? '' : formattedName);
     setRsvp('pending');
     setStep('invitation');
     playTempleChime();
 
     const url = new URL(window.location.href);
-    if (formattedName === 'Dear Devotee') url.searchParams.delete('guest');
+    if (formattedName === 'प्रिय भाविक') url.searchParams.delete('guest');
     else url.searchParams.set('guest', formattedName);
     window.history.replaceState({}, '', url);
 
@@ -223,7 +226,7 @@ export default function App() {
   const submitName = (event: FormEvent) => {
     event.preventDefault();
     if (!typedName.trim()) {
-      setSpeechError('Please enter your name, or continue as a devotee.');
+      setSpeechError('कृपया आपले नाव लिहा किंवा भाविक म्हणून पुढे जा.');
       return;
     }
     revealInvitation(typedName);
@@ -235,8 +238,8 @@ export default function App() {
     window.history.replaceState({}, '', window.location.pathname);
     setStep('welcome');
     setTypedName('');
-    setGuestName('Dear Devotee');
-    setSubtitle('A devotional celebration awaits.');
+    setGuestName('प्रिय भाविक');
+    setSubtitle('बाप्पाच्या मंगलमय उत्सवाची वाट पाहत आहोत.');
     setIsListening(false);
     setIsSpeaking(false);
     setSpeechError('');
@@ -245,18 +248,18 @@ export default function App() {
 
   const updateRsvp = (status: RsvpStatus) => {
     setRsvp(status);
-    const spokenGuest = guestName.replace(/^dear\s+/i, '');
+    const spokenGuest = guestName.replace(/^प्रिय\s+/u, '');
     if (status === 'attending') {
       playCelebrationFanfare();
-      speak(`Thank you, ${spokenGuest}. We are delighted that you will join us. Ganpati Bappa Morya!`, 1250);
+      speak(`धन्यवाद, ${spokenGuest}। आपण सहकुटुंब येणार असल्याचा आम्हाला आनंद आहे। गणपती बाप्पा मोरया!`, 1250);
     } else if (status === 'not-attending') {
-      speak(`Thank you for letting us know, ${spokenGuest}. We will miss your presence and send Bappa's blessings to you and your family.`);
+      speak(`कळवल्याबद्दल धन्यवाद, ${spokenGuest}। आपली उपस्थिती आम्हाला नक्कीच उणीव भासेल। बाप्पाचे आशीर्वाद आपणास व आपल्या परिवारास सदैव लाभोत।`);
     }
   };
 
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main-content">Skip to invitation</a>
+      <a className="skip-link" href="#main-content">थेट आमंत्रणाकडे जा</a>
 
       <div className="ambient-glow ambient-glow-one" aria-hidden="true" />
       <div className="ambient-glow ambient-glow-two" aria-hidden="true" />
@@ -264,11 +267,11 @@ export default function App() {
       <div className="mandala mandala-right" aria-hidden="true" />
 
       <header className="site-header">
-        <button className="brand-lockup" onClick={reset} aria-label="Return to invitation welcome screen">
+        <button className="brand-lockup" onClick={reset} aria-label="आमंत्रणाच्या स्वागत पृष्ठावर परत जा">
           <img src={EVENT.logoPath} alt="" width="48" height="48" />
           <span>
             <strong>{EVENT.mandalName}</strong>
-            <small>{EVENT.locality} • Nagpur</small>
+            <small>{EVENT.locality} • नागपूर</small>
           </span>
         </button>
 
@@ -280,7 +283,7 @@ export default function App() {
               cancelNaturalSpeech();
             }
           }}
-          aria-label={isMuted ? 'Turn invitation sound on' : 'Mute invitation sound'}
+          aria-label={isMuted ? 'आमंत्रणाचा आवाज सुरू करा' : 'आमंत्रणाचा आवाज बंद करा'}
           aria-pressed={isMuted}
         >
           {isMuted ? <VolumeX aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
@@ -299,39 +302,38 @@ export default function App() {
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="hero-copy">
-                <span className="eyebrow"><Sparkles aria-hidden="true" /> Ganesh Utsav • 2026</span>
-                <p className="sacred-line">Ganpati Bappa Morya</p>
+                <span className="eyebrow"><Sparkles aria-hidden="true" /> गणेशोत्सव • २०२६</span>
+                <p className="sacred-line">गणपती बाप्पा मोरया</p>
                 <h1>{EVENT.invitationHeading}</h1>
                 <p className="hero-description">
-                  With devotion in our hearts, we invite you and your family to join our community in celebrating
-                  Bappa’s arrival.
+                  भक्तिभावाने बाप्पाच्या आगमनाचा आनंद साजरा करण्यासाठी आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण.
                 </p>
 
                 <div className="hero-actions">
                   <button className="primary-button" onClick={openInvitation}>
-                    <Play aria-hidden="true" /> Open your invitation <ArrowRight aria-hidden="true" />
+                    <Play aria-hidden="true" /> आपले आमंत्रण उघडा <ArrowRight aria-hidden="true" />
                   </button>
                   <a className="text-link" href={`tel:${EVENT.phone}`}>
-                    <Phone aria-hidden="true" /> Contact the coordinator
+                    <Phone aria-hidden="true" /> संयोजकाशी संपर्क करा
                   </a>
                 </div>
 
-                <div className="event-facts" aria-label="Event details">
-                  <EventFact icon={CalendarDays} label="Date" value={EVENT.dateDisplay} />
-                  <EventFact icon={Clock3} label="Time" value={EVENT.timeDisplay} />
-                  <EventFact icon={MapPin} label="Venue" value={EVENT.venueName} />
+                <div className="event-facts" aria-label="कार्यक्रमाची माहिती">
+                  <EventFact icon={CalendarDays} label="दिनांक" value={EVENT.dateDisplay} />
+                  <EventFact icon={Clock3} label="वेळ" value={EVENT.timeDisplay} />
+                  <EventFact icon={MapPin} label="स्थळ" value={EVENT.venueName} />
                 </div>
               </div>
 
               <div className="emblem-stage">
                 <div className="emblem-halo" aria-hidden="true" />
                 <div className="emblem-frame">
-                  <img src={EVENT.logoPath} alt="Navyuvak Mhada Ganesh Utsav Mandal 2026 emblem" width="1254" height="1254" />
+                  <img src={EVENT.logoPath} alt="नवयुवक म्हाडा गणेश उत्सव मंडळ २०२६ चिन्ह" width="1254" height="1254" />
                 </div>
                 <EventCountdown />
                 <div className="host-note">
                   <Heart aria-hidden="true" />
-                  <span>Hosted with devotion by<strong>{EVENT.mandalName}</strong></span>
+                  <span>भक्तिभावाने आयोजित<strong>{EVENT.mandalName}</strong></span>
                 </div>
               </div>
             </motion.section>
@@ -347,9 +349,9 @@ export default function App() {
               transition={{ duration: 0.4 }}
             >
               <div className="personalize-card devotional-frame">
-                <span className="eyebrow"><ShieldCheck aria-hidden="true" /> Personalise your invitation</span>
-                <h1>How may we address you?</h1>
-                <p>Say or type your name. Voice input is optional and is processed by your browser only.</p>
+                <span className="eyebrow"><ShieldCheck aria-hidden="true" /> आपले आमंत्रण वैयक्तिक करा</span>
+                <h1>आपल्याला कोणत्या नावाने संबोधावे?</h1>
+                <p>आपले नाव बोला किंवा टाइप करा. आवाजातून नाव देणे ऐच्छिक असून त्याची प्रक्रिया आपल्या ब्राउझरमध्येच होते.</p>
 
                 <Avatar
                   expression={isListening ? 'listening' : isSpeaking ? 'talking' : 'idle'}
@@ -365,7 +367,7 @@ export default function App() {
                 {isListening && <AudioWaveform isRecording />}
 
                 <form className="name-form" onSubmit={submitName}>
-                  <label htmlFor="guest-name">Your name</label>
+                  <label htmlFor="guest-name">आपले नाव</label>
                   <div className="name-field-row">
                     <input
                       id="guest-name"
@@ -376,21 +378,21 @@ export default function App() {
                         setTypedName(event.target.value);
                         setSpeechError('');
                       }}
-                      placeholder="Enter your full name"
+                      placeholder="आपले पूर्ण नाव लिहा"
                       aria-describedby={speechError ? 'name-error' : 'name-help'}
                     />
                     <button className="voice-button" type="button" onClick={startListening} disabled={isListening}>
-                      <Mic aria-hidden="true" /> {isListening ? 'Listening…' : 'Speak'}
+                      <Mic aria-hidden="true" /> {isListening ? 'ऐकत आहे…' : 'नाव बोला'}
                     </button>
                   </div>
-                  <p id="name-help" className="field-help">We use your name only to personalise this invitation.</p>
+                  <p id="name-help" className="field-help">आपले नाव फक्त हे आमंत्रण वैयक्तिक करण्यासाठी वापरले जाते.</p>
                   {speechError && <p id="name-error" className="field-error" role="alert">{speechError}</p>}
 
                   <button className="primary-button" type="submit">
-                    Prepare my invitation <ArrowRight aria-hidden="true" />
+                    माझे आमंत्रण तयार करा <ArrowRight aria-hidden="true" />
                   </button>
-                  <button className="secondary-button" type="button" onClick={() => revealInvitation('Dear Devotee')}>
-                    Continue as a devotee
+                  <button className="secondary-button" type="button" onClick={() => revealInvitation('प्रिय भाविक')}>
+                    भाविक म्हणून पुढे जा
                   </button>
                 </form>
               </div>
@@ -425,10 +427,10 @@ export default function App() {
                     aria-pressed={isSpeaking}
                   >
                     {isSpeaking ? <Square aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
-                    {isSpeaking ? 'Stop narration' : 'Hear invitation'}
+                    {isSpeaking ? 'आवाज थांबवा' : 'आमंत्रण ऐका'}
                   </button>
                   <button className="compact-button" onClick={reset}>
-                    <RotateCcw aria-hidden="true" /> Start over
+                    <RotateCcw aria-hidden="true" /> पुन्हा सुरुवात करा
                   </button>
                 </div>
               </div>

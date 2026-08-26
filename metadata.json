@@ -1,6 +1,6 @@
 {
-  "name": "Ganesh Utsav 2026 Invitation",
-  "description": "An interactive invitation from Navyuvak Ganesh Utsav Mandal, Mhada Colony, featuring optional name personalisation, speech recognition and text-to-speech narration.",
+  "name": "गणेशोत्सव २०२६ आमंत्रण",
+  "description": "नवयुवक गणेश उत्सव मंडळ, म्हाडा कॉलनी यांचे वैयक्तिक नाव, आवाजातून नाव नोंदविणे आणि मराठी निवेदन असलेले डिजिटल आमंत्रण.",
   "requestFramePermissions": [
     "microphone"
   ]

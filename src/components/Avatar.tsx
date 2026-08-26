@@ -9,7 +9,7 @@ interface AvatarProps {
 }
 
 export default function Avatar({ isSpeaking, isListening }: AvatarProps) {
-  const status = isListening ? 'Listening for your name' : isSpeaking ? 'Invitation host is speaking' : 'Mandal invitation host';
+  const status = isListening ? 'आपले नाव ऐकत आहे' : isSpeaking ? 'आमंत्रणाचा आवाज सुरू आहे' : 'मंडळाचे आमंत्रण';
 
   return (
     <div className="devotional-host">

@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Manrope:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Anek+Devanagari:wght@400;500;600;700;800&family=Tiro+Devanagari+Marathi:ital@0;1&display=swap');
 @import "tailwindcss";
 
 :root {
   color-scheme: dark;
-  font-family: 'Manrope', system-ui, sans-serif;
+  font-family: 'Anek Devanagari', system-ui, sans-serif;
   --bg: #110303;
   --bg-deep: #070202;
   --surface: rgba(43, 8, 7, 0.78);
@@ -20,6 +20,21 @@
   --success: #49c983;
   --danger: #ff8b7b;
   --shadow: 0 28px 70px rgba(0, 0, 0, 0.42);
+}
+
+html[lang^='mr'] .brand-lockup strong,
+html[lang^='mr'] .brand-lockup small,
+html[lang^='mr'] .eyebrow,
+html[lang^='mr'] .panel-label,
+html[lang^='mr'] .personalize-card h1,
+html[lang^='mr'] .event-fact small,
+html[lang^='mr'] .countdown-unit span,
+html[lang^='mr'] .invitation-locality,
+html[lang^='mr'] .guest-ribbon span,
+html[lang^='mr'] .coordinator-line span,
+html[lang^='mr'] .rsvp-stamp {
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 * {
@@ -204,7 +219,7 @@ a {
 }
 
 .brand-lockup strong {
-  font-family: 'Cinzel', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   font-size: 0.82rem;
   letter-spacing: 0.035em;
   white-space: nowrap;
@@ -283,7 +298,7 @@ a {
 .sacred-line,
 .morya-line {
   margin: 1.4rem 0 0.45rem;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   color: var(--saffron);
   font-size: clamp(1.45rem, 3vw, 2.2rem);
   font-weight: 600;
@@ -293,7 +308,7 @@ a {
 .hero-copy h1,
 .personalize-card h1 {
   margin: 0;
-  font-family: 'Cinzel', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   font-size: clamp(2.55rem, 6vw, 5.4rem);
   line-height: 1.04;
   letter-spacing: -0.035em;
@@ -516,7 +531,7 @@ a {
 }
 
 .countdown-unit strong {
-  font-family: 'Cinzel', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   color: var(--gold-bright);
   font-size: 1.35rem;
   font-variant-numeric: tabular-nums;
@@ -1034,7 +1049,7 @@ a {
 }
 
 .invitation-overline {
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   color: var(--gold-bright);
   font-size: 1rem;
   font-style: italic;
@@ -1045,7 +1060,7 @@ a {
   position: relative;
   max-width: 40rem;
   margin: 0.55rem auto 0;
-  font-family: 'Cinzel', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   color: var(--ivory);
   font-size: clamp(1.45rem, 3.7vw, 2.45rem);
   line-height: 1.2;
@@ -1089,14 +1104,14 @@ a {
 
 .invitation-copy {
   color: #e2d4bf;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   font-size: 1.05rem;
 }
 
 .formal-invitation > h2 {
   position: relative;
   margin: 0.35rem auto 0;
-  font-family: 'Cinzel', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   color: var(--gold-bright);
   font-size: clamp(2rem, 6vw, 4rem);
   line-height: 1.08;
@@ -1131,7 +1146,7 @@ a {
 
 .guest-ribbon strong {
   color: var(--ivory);
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   font-size: clamp(1.55rem, 4vw, 2.35rem);
   overflow-wrap: anywhere;
 }
@@ -1215,7 +1230,7 @@ a {
   max-width: 36rem;
   margin: 1.2rem auto;
   color: #e1d3bd;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   font-size: 1rem;
   font-style: italic;
   line-height: 1.6;
@@ -1286,7 +1301,7 @@ a {
 
 .action-panel h3 {
   margin: 0.45rem 0 0;
-  font-family: 'Cormorant Garamond', serif;
+  font-family: 'Tiro Devanagari Marathi', serif;
   color: var(--ivory);
   font-size: 1.35rem;
 }

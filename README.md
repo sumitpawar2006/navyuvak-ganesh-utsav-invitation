@@ -1,36 +1,36 @@
-# Ganesh Utsav 2026 Invitation
+# गणेशोत्सव २०२६ आमंत्रण
 
-An interactive, mobile-first digital invitation for **Navyuvak Ganesh Utsav Mandal, Mhada Colony, Nagpur**.
+**नवयुवक गणेश उत्सव मंडळ, म्हाडा कॉलनी, नागपूर** यांच्यासाठी तयार केलेले responsive डिजिटल आमंत्रण.
 
-## Event
+## कार्यक्रम
 
-- Date: 14 September 2026
-- Time: 6:00 PM
-- Venue: Sarvajanik Maidan, Mhada Colony, Electronic Zone Square, MIDC, Hingna Road, Nagpur 440016
-- Coordinator: Mangesh Chandrakant Khadatkar
-- Contact: 88886 65536
+- दिनांक: १४ सप्टेंबर २०२६
+- वेळ: सायंकाळी ६:०० वाजता
+- स्थळ: सार्वजनिक मैदान, म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक, एमआयडीसी, हिंगणा रोड, नागपूर – ४४००१६
+- संयोजक: मंगेश चंद्रकांत खडतकर
+- संपर्क: ८८८८६ ६५५३६
 
-## Features
+## वैशिष्ट्ये
 
-- Optional voice or typed guest-name personalisation
-- English text-to-speech invitation narration
-- RSVP response state
-- Calendar download, directions, phone and WhatsApp actions
-- Shareable personal link and downloadable PNG invitation
-- Responsive and reduced-motion accessible design
+- आवाजातून किंवा टाइप करून नावासह वैयक्तिक आमंत्रण
+- नैसर्गिक मराठी text-to-speech निवेदन
+- उपस्थितीचा प्रतिसाद
+- कॅलेंडर, मार्गदर्शन, फोन आणि WhatsApp कृती
+- शेअर करता येणारी वैयक्तिक लिंक आणि PNG डाउनलोड
+- responsive आणि reduced-motion सुलभ रचना
 
-## Run locally
+## स्थानिक पातळीवर चालवा
 
 ```bash
 npm install
 npm run dev
 ```
 
-Production checks:
+Production तपासणी:
 
 ```bash
 npm run lint
 npm run build
 ```
 
-All event content is centralised in `src/event.ts`.
+कार्यक्रमाची सर्व माहिती `src/event.ts` मध्ये एकाच ठिकाणी ठेवली आहे.

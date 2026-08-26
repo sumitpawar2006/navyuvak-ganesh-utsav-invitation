@@ -19,11 +19,10 @@ let startTimer: number | null = null;
 
 const formatForSpeech = (value: string) =>
   value
-    .replace(/\b6:00 PM\b/gi, 'six in the evening')
-    .replace(/\b14 September 2026\b/gi, 'the fourteenth of September, twenty twenty-six')
-    .replace(/\bMIDC\b/g, 'M I D C')
-    .replace(/\b440016\b/g, 'four four zero zero one six')
-    .replace(/\bUtsav\b/gi, 'Ootsav')
+    .replace(/६:००|\b6:00\s*PM\b/gi, 'सायंकाळी सहा वाजता')
+    .replace(/१४ सप्टेंबर २०२६|\b14 September 2026\b/gi, 'चौदा सप्टेंबर, दोन हजार सव्वीस')
+    .replace(/एमआयडीसी|\bMIDC\b/gi, 'एम आय डी सी')
+    .replace(/४४००१६|\b440016\b/g, 'चार चार शून्य शून्य एक सहा')
     .replace(/\s+/g, ' ')
     .trim();
 
@@ -68,7 +67,7 @@ const splitLongSentence = (sentence: string) => {
 
 export const createSpeechChunks = (rawText: string) => {
   const text = formatForSpeech(rawText);
-  const sentences = text.match(/[^.!?]+[.!?]?/g) ?? [text];
+  const sentences = text.match(/[^.!?।]+[.!?।]?/g) ?? [text];
   return sentences.flatMap((sentence) => splitLongSentence(sentence.trim())).filter(Boolean);
 };
 
@@ -77,27 +76,27 @@ const voiceScore = (voice: SpeechSynthesisVoice) => {
   let score = 0;
 
   if (/natural|neural|wavenet|online|enhanced|premium/.test(name)) score += 300;
-  if (/neerja/.test(name)) score += 180;
-  if (/prabhat/.test(name)) score += 160;
+  if (/aarohi/.test(name)) score += 180;
+  if (/manohar/.test(name)) score += 160;
   if (/google/.test(name)) score += 100;
   if (/microsoft/.test(name)) score += 90;
-  if (/heera|veena|ravi/.test(name)) score += 70;
+  if (/marathi|मराठी/.test(name)) score += 70;
   if (!voice.localService) score += 40;
   if (/desktop|compact|espeak/.test(name)) score -= 220;
 
   return score;
 };
 
-const isIndianEnglishVoice = (voice: SpeechSynthesisVoice) => {
+const isMarathiVoice = (voice: SpeechSynthesisVoice) => {
   const language = voice.lang.toLowerCase().replace('_', '-');
   const name = voice.name.toLowerCase();
-  return language === 'en-in' || /english\s*\(?india\)?|india.*english/.test(name);
+  return language === 'mr-in' || language.startsWith('mr-') || /marathi|मराठी/.test(name);
 };
 
 export const getBestNaturalVoices = () => {
   if (!window.speechSynthesis) return [];
   return [...window.speechSynthesis.getVoices()]
-    .filter(isIndianEnglishVoice)
+    .filter(isMarathiVoice)
     .sort((first, second) => voiceScore(second) - voiceScore(first));
 };
 
@@ -186,7 +185,7 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
       const utterance = new SpeechSynthesisUtterance(chunk);
       let chunkCompleted = false;
       if (selectedVoice) utterance.voice = selectedVoice;
-      utterance.lang = 'en-IN';
+      utterance.lang = 'mr-IN';
       utterance.rate = hasNaturalVoice ? 0.92 : 0.88;
       utterance.pitch = 1;
       utterance.volume = 1;

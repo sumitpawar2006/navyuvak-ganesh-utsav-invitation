@@ -51,7 +51,7 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
   const shareInvitation = async () => {
     if (navigator.share) {
       try {
-        await navigator.share({ title: `${EVENT.title} Invitation`, text: shareText, url: shareUrl });
+        await navigator.share({ title: `${EVENT.title} आमंत्रण`, text: shareText, url: shareUrl });
         return;
       } catch (error) {
         if ((error as DOMException)?.name === 'AbortError') return;
@@ -73,8 +73,8 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         backgroundColor: '#170404',
       });
       const anchor = document.createElement('a');
-      const safeName = guestName.replace(/[^a-z0-9]+/gi, '_');
-      anchor.download = `Ganesh_Utsav_Invitation_${safeName}.png`;
+      const safeName = guestName.replace(/[^\p{L}\p{N}]+/gu, '_');
+      anchor.download = `Ganeshotsav_Invitation_${safeName}.png`;
       anchor.href = dataUrl;
       document.body.appendChild(anchor);
       anchor.click();
@@ -104,9 +104,9 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
           <img src={EVENT.logoPath} alt="" width="108" height="108" />
         </div>
 
-        <p className="invitation-overline">With the blessings of Lord Ganesha</p>
+        <p className="invitation-overline">श्री गणेशाच्या कृपाशीर्वादाने</p>
         <h1>{EVENT.mandalName}</h1>
-        <p className="invitation-locality">{EVENT.locality} • Nagpur</p>
+        <p className="invitation-locality">{EVENT.locality} • नागपूर</p>
 
         <div className="ornamental-divider" aria-hidden="true">
           <span />
@@ -114,24 +114,24 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
           <span />
         </div>
 
-        <p className="invitation-copy">cordially invites you and your family to celebrate</p>
+        <p className="invitation-copy">आपणास व आपल्या परिवारास सस्नेह आमंत्रित करीत आहोत</p>
         <h2>{EVENT.title}</h2>
-        <p className="morya-line">Ganpati Bappa Morya</p>
+        <p className="morya-line">गणपती बाप्पा मोरया</p>
 
         <div className="guest-ribbon">
-          <span>Especially for</span>
+          <span>खास आमंत्रण</span>
           <strong>{guestName}</strong>
         </div>
 
         <div className="invitation-detail-grid">
           <div>
             <CalendarPlus aria-hidden="true" />
-            <span>Date</span>
+            <span>दिनांक</span>
             <strong>{EVENT.dateDisplay}</strong>
           </div>
           <div>
             <Clock3 aria-hidden="true" />
-            <span>Time</span>
+            <span>वेळ</span>
             <strong>{EVENT.timeDisplay}</strong>
           </div>
         </div>
@@ -139,19 +139,18 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         <div className="venue-panel">
           <MapPin aria-hidden="true" />
           <span>
-            <small>Venue</small>
+            <small>स्थळ</small>
             <strong>{EVENT.venueName}</strong>
             <p>{EVENT.address}</p>
           </span>
         </div>
 
         <p className="blessing-copy">
-          Come, share in the devotion, joy and togetherness. Your gracious presence will make our celebration
-          memorable.
+          भक्ती, आनंद आणि एकोप्याच्या या मंगल सोहळ्यात सहकुटुंब सहभागी व्हा. आपल्या उपस्थितीने उत्सवाची शोभा वाढेल.
         </p>
 
         <div className="coordinator-line">
-          <span>Coordinator</span>
+          <span>संयोजक</span>
           <strong>{EVENT.coordinator}</strong>
           <small>{EVENT.phoneDisplay}</small>
         </div>
@@ -159,16 +158,16 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         {rsvp !== 'pending' && (
           <div className={rsvp === 'attending' ? 'rsvp-stamp attending' : 'rsvp-stamp'}>
             {rsvp === 'attending' ? <CheckCircle2 aria-hidden="true" /> : <XCircle aria-hidden="true" />}
-            {rsvp === 'attending' ? 'Presence confirmed' : 'Response received'}
+            {rsvp === 'attending' ? 'उपस्थिती निश्चित' : 'प्रतिसाद मिळाला'}
           </div>
         )}
       </motion.div>
 
-      <aside className="invitation-actions" aria-label="Invitation actions">
+      <aside className="invitation-actions" aria-label="आमंत्रणासाठी उपलब्ध कृती">
         <div className="action-panel">
-          <span className="panel-label">Your response</span>
-          <h3>Will you join the celebration?</h3>
-          <p>Your response is stored only on this device.</p>
+          <span className="panel-label">आपला प्रतिसाद</span>
+          <h3>आपण उत्सवात सहभागी होणार का?</h3>
+          <p>आपला प्रतिसाद फक्त या उपकरणावर जतन केला जातो.</p>
 
           <div className="rsvp-buttons">
             <button
@@ -176,48 +175,48 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
               onClick={() => onRsvp('attending')}
               aria-pressed={rsvp === 'attending'}
             >
-              <CheckCircle2 aria-hidden="true" /> I will join
+              <CheckCircle2 aria-hidden="true" /> मी येणार आहे
             </button>
             <button
               className={rsvp === 'not-attending' ? 'rsvp-button no selected' : 'rsvp-button no'}
               onClick={() => onRsvp('not-attending')}
               aria-pressed={rsvp === 'not-attending'}
             >
-              <XCircle aria-hidden="true" /> Unable to attend
+              <XCircle aria-hidden="true" /> उपस्थित राहू शकणार नाही
             </button>
           </div>
 
           {rsvp === 'attending' && (
             <div className="response-message success" role="status">
-              <Check aria-hidden="true" /> We look forward to welcoming you and your family.
+              <Check aria-hidden="true" /> आपले व आपल्या परिवाराचे स्वागत करण्यास आम्ही उत्सुक आहोत.
             </div>
           )}
           {rsvp === 'not-attending' && (
-            <div className="response-message" role="status">Thank you for letting the mandal know.</div>
+            <div className="response-message" role="status">मंडळाला कळवल्याबद्दल धन्यवाद.</div>
           )}
         </div>
 
         <div className="action-panel compact">
-          <span className="panel-label">Save & share</span>
+          <span className="panel-label">जतन करा व शेअर करा</span>
           <div className="action-list">
             <button onClick={addToCalendar}>
-              <CalendarPlus aria-hidden="true" /> Add to calendar
+              <CalendarPlus aria-hidden="true" /> कॅलेंडरमध्ये जोडा
             </button>
             <a href={EVENT.mapUrl} target="_blank" rel="noreferrer">
-              <Navigation aria-hidden="true" /> Get directions
+              <Navigation aria-hidden="true" /> मार्गदर्शन मिळवा
             </a>
             <button onClick={shareInvitation}>
               {copied ? <Copy aria-hidden="true" /> : <Share2 aria-hidden="true" />}
-              {copied ? 'Link copied' : 'Share invitation'}
+              {copied ? 'लिंक कॉपी झाली' : 'आमंत्रण शेअर करा'}
             </button>
             <a href={whatsAppUrl} target="_blank" rel="noreferrer">
-              <MessageCircle aria-hidden="true" /> Share on WhatsApp
+              <MessageCircle aria-hidden="true" /> WhatsApp वर शेअर करा
             </a>
             <button onClick={downloadInvitation} disabled={isDownloading}>
-              <Download aria-hidden="true" /> {isDownloading ? 'Creating image…' : 'Download invitation'}
+              <Download aria-hidden="true" /> {isDownloading ? 'चित्र तयार होत आहे…' : 'आमंत्रण डाउनलोड करा'}
             </button>
             <a href={`tel:${EVENT.phone}`}>
-              <Phone aria-hidden="true" /> Call {EVENT.phoneDisplay}
+              <Phone aria-hidden="true" /> {EVENT.phoneDisplay} वर कॉल करा
             </a>
           </div>
         </div>
