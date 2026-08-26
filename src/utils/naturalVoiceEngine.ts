@@ -3,6 +3,7 @@ const MAX_CHUNK_LENGTH = 120;
 type SpeechOptions = {
   isMuted?: boolean;
   startDelayMs?: number;
+  audioUrl?: string;
   onStart?: () => void;
   onEnd?: () => void;
 };
@@ -15,6 +16,7 @@ type SpeechSession = {
 let sessionCounter = 0;
 let activeSession: SpeechSession | null = null;
 let activeUtterances: SpeechSynthesisUtterance[] = [];
+let activeAudio: HTMLAudioElement | null = null;
 let startTimer: number | null = null;
 
 const formatForSpeech = (value: string) =>
@@ -78,6 +80,7 @@ const voiceScore = (voice: SpeechSynthesisVoice) => {
   if (/natural|neural|wavenet|online|enhanced|premium/.test(name)) score += 300;
   if (/aarohi/.test(name)) score += 180;
   if (/manohar/.test(name)) score += 160;
+  if (/swara|madhur|kalpana|hemant/.test(name)) score += 140;
   if (/google/.test(name)) score += 100;
   if (/microsoft/.test(name)) score += 90;
   if (/marathi|मराठी/.test(name)) score += 70;
@@ -93,10 +96,23 @@ const isMarathiVoice = (voice: SpeechSynthesisVoice) => {
   return language === 'mr-in' || language.startsWith('mr-') || /marathi|मराठी/.test(name);
 };
 
+const isHindiVoice = (voice: SpeechSynthesisVoice) => {
+  const language = voice.lang.toLowerCase().replace('_', '-');
+  const name = voice.name.toLowerCase();
+  return language === 'hi-in' || language.startsWith('hi-') || /hindi|हिंदी/.test(name);
+};
+
 export const getBestNaturalVoices = () => {
   if (!window.speechSynthesis) return [];
-  return [...window.speechSynthesis.getVoices()]
+  const voices = [...window.speechSynthesis.getVoices()];
+  const marathiVoices = voices
     .filter(isMarathiVoice)
+    .sort((first, second) => voiceScore(second) - voiceScore(first));
+
+  if (marathiVoices.length > 0) return marathiVoices;
+
+  return voices
+    .filter(isHindiVoice)
     .sort((first, second) => voiceScore(second) - voiceScore(first));
 };
 
@@ -124,6 +140,21 @@ export const primeNaturalVoices = () => {
   window.speechSynthesis?.getVoices();
 };
 
+const releaseActiveAudio = () => {
+  if (!activeAudio) return;
+
+  activeAudio.onplay = null;
+  activeAudio.onended = null;
+  activeAudio.onerror = null;
+  activeAudio.pause();
+  try {
+    activeAudio.currentTime = 0;
+  } catch {
+    // Some browsers reject seeking before audio metadata is available.
+  }
+  activeAudio = null;
+};
+
 export const cancelNaturalSpeech = () => {
   sessionCounter += 1;
   if (startTimer !== null) {
@@ -134,18 +165,14 @@ export const cancelNaturalSpeech = () => {
   const previousSession = activeSession;
   activeSession = null;
   activeUtterances = [];
+  releaseActiveAudio();
   window.speechSynthesis?.cancel();
   previousSession?.finish();
 };
 
 export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
-  const { isMuted, startDelayMs = 80, onStart, onEnd } = options;
+  const { isMuted, startDelayMs = 80, audioUrl, onStart, onEnd } = options;
   cancelNaturalSpeech();
-
-  if (!window.speechSynthesis) {
-    onEnd?.();
-    return;
-  }
 
   const sessionId = ++sessionCounter;
   let finished = false;
@@ -154,8 +181,15 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
   const finish = () => {
     if (finished) return;
     finished = true;
-    if (activeSession?.id === sessionId) activeSession = null;
-    activeUtterances = [];
+    if (activeSession?.id === sessionId) {
+      activeSession = null;
+      if (startTimer !== null) {
+        window.clearTimeout(startTimer);
+        startTimer = null;
+      }
+      activeUtterances = [];
+      releaseActiveAudio();
+    }
     onEnd?.();
   };
 
@@ -167,57 +201,131 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
     return;
   }
 
-  void waitForVoices().then((voices) => {
+  const startSpeechSynthesis = () => {
     if (activeSession?.id !== sessionId) return;
-
-    const chunks = createSpeechChunks(rawText);
-    if (chunks.length === 0) {
+    if (!window.speechSynthesis) {
       finish();
       return;
     }
 
-    const selectedVoice = voices[0];
-    const selectedVoiceName = selectedVoice?.name.toLowerCase() ?? '';
-    const hasNaturalVoice = /natural|neural|wavenet|online|enhanced|premium/.test(selectedVoiceName);
-    let completedChunks = 0;
-
-    activeUtterances = chunks.map((chunk) => {
-      const utterance = new SpeechSynthesisUtterance(chunk);
-      let chunkCompleted = false;
-      if (selectedVoice) utterance.voice = selectedVoice;
-      utterance.lang = 'mr-IN';
-      utterance.rate = hasNaturalVoice ? 0.92 : 0.88;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-
-      utterance.onstart = () => {
-        if (activeSession?.id !== sessionId || started) return;
-        started = true;
-        onStart?.();
-      };
-
-      const markChunkComplete = () => {
-        if (activeSession?.id !== sessionId || chunkCompleted) return;
-        chunkCompleted = true;
-        completedChunks += 1;
-        if (completedChunks >= chunks.length) finish();
-      };
-
-      utterance.onend = markChunkComplete;
-      utterance.onerror = markChunkComplete;
-      return utterance;
-    });
-
-    startTimer = window.setTimeout(() => {
-      startTimer = null;
+    void waitForVoices().then((voices) => {
       if (activeSession?.id !== sessionId) return;
 
-      try {
-        window.speechSynthesis.resume();
-        activeUtterances.forEach((utterance) => window.speechSynthesis.speak(utterance));
-      } catch {
+      const chunks = createSpeechChunks(rawText);
+      if (chunks.length === 0) {
         finish();
+        return;
       }
-    }, Math.max(80, startDelayMs));
-  });
+
+      const selectedVoice = voices[0];
+      const selectedVoiceName = selectedVoice?.name.toLowerCase() ?? '';
+      const hasNaturalVoice = /natural|neural|wavenet|online|enhanced|premium/.test(selectedVoiceName);
+      let completedChunks = 0;
+
+      activeUtterances = chunks.map((chunk) => {
+        const utterance = new SpeechSynthesisUtterance(chunk);
+        let chunkCompleted = false;
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.lang = selectedVoice?.lang || 'mr-IN';
+        utterance.rate = hasNaturalVoice ? 0.92 : 0.88;
+        utterance.pitch = 1;
+        utterance.volume = 1;
+
+        utterance.onstart = () => {
+          if (activeSession?.id !== sessionId || started) return;
+          started = true;
+          onStart?.();
+        };
+
+        const markChunkComplete = () => {
+          if (activeSession?.id !== sessionId || chunkCompleted) return;
+          chunkCompleted = true;
+          completedChunks += 1;
+          if (completedChunks >= chunks.length) finish();
+        };
+
+        utterance.onend = markChunkComplete;
+        utterance.onerror = markChunkComplete;
+        return utterance;
+      });
+
+      startTimer = window.setTimeout(() => {
+        startTimer = null;
+        if (activeSession?.id !== sessionId) return;
+
+        try {
+          window.speechSynthesis.resume();
+          activeUtterances.forEach((utterance) => window.speechSynthesis.speak(utterance));
+        } catch {
+          finish();
+        }
+      }, audioUrl ? 80 : Math.max(80, startDelayMs));
+    });
+  };
+
+  if (!audioUrl) {
+    startSpeechSynthesis();
+    return;
+  }
+
+  const audio = new Audio(audioUrl);
+  const requestedStartAt = Date.now() + Math.max(80, startDelayMs);
+  let fallingBack = false;
+  activeAudio = audio;
+  audio.preload = 'auto';
+
+  const fallbackToSpeech = () => {
+    if (fallingBack || activeSession?.id !== sessionId) return;
+    fallingBack = true;
+    releaseActiveAudio();
+    startSpeechSynthesis();
+  };
+
+  const beginRecordedPlayback = () => {
+    startTimer = null;
+    if (activeSession?.id !== sessionId) return;
+
+    audio.muted = false;
+    audio.volume = 1;
+    try {
+      audio.currentTime = 0;
+    } catch {
+      // Playback can still begin normally when seeking is unavailable.
+    }
+
+    audio.onplay = () => {
+      if (activeSession?.id !== sessionId || started) return;
+      started = true;
+      onStart?.();
+    };
+    audio.onended = finish;
+    audio.onerror = fallbackToSpeech;
+    void audio.play().catch(fallbackToSpeech);
+  };
+
+  const scheduleRecordedPlayback = () => {
+    if (activeSession?.id !== sessionId) return;
+    const remainingDelay = Math.max(0, requestedStartAt - Date.now());
+    startTimer = window.setTimeout(beginRecordedPlayback, remainingDelay);
+  };
+
+  // Priming the same audio element immediately after the user's click makes
+  // delayed playback reliable on stricter mobile browsers.
+  audio.muted = true;
+  void audio.play()
+    .then(() => {
+      if (activeSession?.id !== sessionId) return;
+      audio.pause();
+      try {
+        audio.currentTime = 0;
+      } catch {
+        // The real playback below will begin from the available position.
+      }
+      audio.muted = false;
+      scheduleRecordedPlayback();
+    })
+    .catch(() => {
+      audio.muted = false;
+      scheduleRecordedPlayback();
+    });
 };

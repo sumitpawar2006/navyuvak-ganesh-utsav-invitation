@@ -27,6 +27,13 @@ import { cancelNaturalSpeech, primeNaturalVoices, speakNaturalText } from './uti
 
 type AppStep = 'welcome' | 'personalize' | 'invitation';
 
+const NARRATION_AUDIO = {
+  welcome: '/audio/welcome-marathi.mp3',
+  invitation: '/audio/invitation-marathi.mp3',
+  attending: '/audio/attending-marathi.mp3',
+  notAttending: '/audio/not-attending-marathi.mp3',
+} as const;
+
 const cleanGuestName = (value: string) =>
   value
     .trim()
@@ -133,11 +140,12 @@ export default function App() {
     };
   }, [step]);
 
-  const speak = (text: string, startDelayMs = 80) => {
+  const speak = (text: string, startDelayMs = 80, audioUrl?: string) => {
     setSubtitle(text);
     speakNaturalText(text, {
       isMuted,
       startDelayMs,
+      audioUrl,
       onStart: () => setIsSpeaking(true),
       onEnd: () => setIsSpeaking(false),
     });
@@ -148,7 +156,8 @@ export default function App() {
     setStep('personalize');
     speak(
       `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`,
-      900
+      900,
+      NARRATION_AUDIO.welcome
     );
   };
 
@@ -220,7 +229,7 @@ export default function App() {
     else url.searchParams.set('guest', formattedName);
     window.history.replaceState({}, '', url);
 
-    speak(buildInvitationSpeech(formattedName), 900);
+    speak(buildInvitationSpeech(formattedName), 900, NARRATION_AUDIO.invitation);
   };
 
   const submitName = (event: FormEvent) => {
@@ -251,9 +260,17 @@ export default function App() {
     const spokenGuest = guestName.replace(/^प्रिय\s+/u, '');
     if (status === 'attending') {
       playCelebrationFanfare();
-      speak(`धन्यवाद, ${spokenGuest}। आपण सहकुटुंब येणार असल्याचा आम्हाला आनंद आहे। गणपती बाप्पा मोरया!`, 1250);
+      speak(
+        `धन्यवाद, ${spokenGuest}। आपण सहकुटुंब येणार असल्याचा आम्हाला आनंद आहे। गणपती बाप्पा मोरया!`,
+        1250,
+        NARRATION_AUDIO.attending
+      );
     } else if (status === 'not-attending') {
-      speak(`कळवल्याबद्दल धन्यवाद, ${spokenGuest}। आपली उपस्थिती आम्हाला नक्कीच उणीव भासेल। बाप्पाचे आशीर्वाद आपणास व आपल्या परिवारास सदैव लाभोत।`);
+      speak(
+        `कळवल्याबद्दल धन्यवाद, ${spokenGuest}। आपली उपस्थिती आम्हाला नक्कीच उणीव भासेल। बाप्पाचे आशीर्वाद आपणास व आपल्या परिवारास सदैव लाभोत।`,
+        80,
+        NARRATION_AUDIO.notAttending
+      );
     }
   };
 
@@ -422,7 +439,7 @@ export default function App() {
                         return;
                       }
                       playTempleChime();
-                      speak(buildInvitationSpeech(guestName), 900);
+                      speak(buildInvitationSpeech(guestName), 900, NARRATION_AUDIO.invitation);
                     }}
                     aria-pressed={isSpeaking}
                   >
