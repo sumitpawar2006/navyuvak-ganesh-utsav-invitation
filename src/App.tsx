@@ -161,7 +161,7 @@ export default function App() {
     if (!showCurtain) return;
     const timer = window.setTimeout(
       () => setShowCurtain(false),
-      prefersReducedMotion ? 120 : 4200
+      prefersReducedMotion ? 120 : 7200
     );
     return () => window.clearTimeout(timer);
   }, [prefersReducedMotion, showCurtain]);
@@ -446,15 +446,15 @@ export default function App() {
             aria-hidden="true"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.4, 0, 1, 1] }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.55, ease: [0.4, 0, 1, 1] }}
           >
             <motion.div
               className="curtain-panel curtain-panel-left"
               initial={{ x: 0 }}
               animate={{ x: '-104%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.01 : 3,
-                delay: prefersReducedMotion ? 0 : 0.75,
+                duration: prefersReducedMotion ? 0.01 : 5.3,
+                delay: prefersReducedMotion ? 0 : 1.05,
                 ease: [0.76, 0, 0.24, 1],
               }}
             />
@@ -463,8 +463,8 @@ export default function App() {
               initial={{ x: 0 }}
               animate={{ x: '104%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.01 : 3,
-                delay: prefersReducedMotion ? 0 : 0.75,
+                duration: prefersReducedMotion ? 0.01 : 5.3,
+                delay: prefersReducedMotion ? 0 : 1.05,
                 ease: [0.76, 0, 0.24, 1],
               }}
             />
@@ -473,8 +473,8 @@ export default function App() {
               initial={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
               animate={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.86, x: '-50%', y: '-50%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.01 : 1.15,
-                delay: prefersReducedMotion ? 0 : 0.72,
+                duration: prefersReducedMotion ? 0.01 : 1.65,
+                delay: prefersReducedMotion ? 0 : 0.9,
                 ease: [0.4, 0, 0.2, 1],
               }}
             >
