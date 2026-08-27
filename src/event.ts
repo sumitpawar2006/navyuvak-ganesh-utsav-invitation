@@ -13,8 +13,7 @@ export const EVENT = {
   phoneDisplay: '८८८८६ ६५५३६',
   phone: '+918888665536',
   logoPath: '/assets/navyuvak-mandal-2026.jpeg',
-  mapUrl:
-    'https://www.google.com/maps/search/?api=1&query=Sarvajanik%20Maidan%2C%20Mhada%20Colony%2C%20Electronic%20Zone%20Square%2C%20MIDC%2C%20Hingna%20Road%2C%20Nagpur%20440016',
+  mapUrl: 'https://maps.app.goo.gl/3nfW9WqB54YpQb848',
 } as const;
 
 const escapeCalendarText = (value: string) =>

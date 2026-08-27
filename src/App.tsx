@@ -22,6 +22,7 @@ import Avatar from './components/Avatar';
 import CelebrationOverlay from './components/CelebrationOverlay';
 import InvitationCard, { type RsvpStatus } from './components/InvitationCard';
 import { EVENT, buildInvitationSpeech } from './event';
+import { toMarathiName } from './utils/marathiName';
 import { cancelNaturalSpeech, primeNaturalVoices, speakNaturalText } from './utils/naturalVoiceEngine';
 
 type AppStep = 'welcome' | 'personalize' | 'invitation';
@@ -62,6 +63,8 @@ const cleanGuestName = (value: string) =>
     .split(' ')
     .map((part) => (/^[a-z]/i.test(part) ? part.charAt(0).toUpperCase() + part.slice(1).toLowerCase() : part))
     .join(' ');
+
+const formatGuestName = (value: string) => toMarathiName(cleanGuestName(value));
 
 const formatCount = (value: number) =>
   value.toLocaleString('mr-IN', { minimumIntegerDigits: 2, useGrouping: false });
@@ -122,7 +125,7 @@ function EventFact({ icon: Icon, label, value }: { icon: typeof CalendarDays; la
 export default function App() {
   const sharedGuest = useMemo(() => {
     const value = new URLSearchParams(window.location.search).get('guest');
-    return value ? cleanGuestName(value) : '';
+    return value ? formatGuestName(value) : '';
   }, []);
 
   const [step, setStep] = useState<AppStep>(sharedGuest ? 'invitation' : 'welcome');
@@ -222,7 +225,7 @@ export default function App() {
       : [window.navigator.language]
     ).filter(Boolean);
     const deviceModes = deviceLanguages.map((language) => ({ language, label: 'फोनच्या भाषेत' }));
-    const recognitionModes = [...deviceModes, ...INDIAN_NAME_LANGUAGES].filter(
+    const recognitionModes = [INDIAN_NAME_LANGUAGES[0], ...deviceModes, ...INDIAN_NAME_LANGUAGES.slice(1)].filter(
       (mode, index, modes) => modes.findIndex(
         (candidate) => candidate.language.toLowerCase() === mode.language.toLowerCase()
       ) === index
@@ -274,7 +277,7 @@ export default function App() {
           if (event.results[index].isFinal) hasFinalResult = true;
         }
 
-        const name = cleanGuestName(transcript);
+        const name = formatGuestName(transcript);
         if (!name) return;
         latestName = name;
         if (hasFinalResult) recognizedName = name;
@@ -364,7 +367,7 @@ export default function App() {
   const revealInvitation = (name: string) => {
     recognitionSessionRef.current += 1;
     recognitionRef.current?.abort?.();
-    const formattedName = cleanGuestName(name) || 'प्रिय भाविक';
+    const formattedName = formatGuestName(name) || 'प्रिय भाविक';
     setGuestName(formattedName);
     setTypedName(formattedName === 'प्रिय भाविक' ? '' : formattedName);
     setRsvp('pending');
