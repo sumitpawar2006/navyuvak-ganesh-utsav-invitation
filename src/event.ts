@@ -9,8 +9,9 @@ export const EVENT = {
   calendarStart: '20260914T180000',
   venueName: 'सार्वजनिक मैदान',
   address: 'म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक, एमआयडीसी, हिंगणा रोड, नागपूर – ४४००१६',
-  coordinator: 'मंगेश चंद्रकांत खडतकर',
-  phoneDisplay: '८८८८६ ६५५३६',
+  president: 'मंगेश चंद्रकांत खडतकर',
+  presidentMandalName: 'नवयुवक म्हाडा गणेश उत्सव मंडळ',
+  phoneDisplay: '८८८८६६५५३६',
   phone: '+918888665536',
   logoPath: '/assets/navyuvak-mandal-2026.jpeg',
   mapUrl: 'https://maps.app.goo.gl/3nfW9WqB54YpQb848',
@@ -25,7 +26,7 @@ export const buildInvitationSpeech = (guestName: string) =>
   `गणपती बाप्पा मोरया! प्रिय ${addressName(guestName)}, आपणास व आपल्या परिवारास ${EVENT.title} साठी आमंत्रित करताना आम्हाला अतिशय आनंद होत आहे। हा मंगल सोहळा ${EVENT.mandalName}, ${EVENT.locality} तर्फे आयोजित केला आहे। दिनांक चौदा सप्टेंबर, दोन हजार सव्वीस रोजी, सायंकाळी सहा वाजता, ${EVENT.venueName}, ${EVENT.address} येथे अवश्य उपस्थित राहावे। आपल्या उपस्थितीने आणि आशीर्वादाने हा उत्सव अधिक आनंदमय होईल। आपले मनःपूर्वक स्वागत आहे। गणपती बाप्पा मोरया!`;
 
 export const buildCalendarFile = (guestName: string) => {
-  const description = `प्रिय ${addressName(guestName)}, ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण. संयोजक: ${EVENT.coordinator}, ${EVENT.phoneDisplay}.`;
+  const description = `प्रिय ${addressName(guestName)}, ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण. अध्यक्ष: ${EVENT.president}, ${EVENT.presidentMandalName}, ${EVENT.phoneDisplay}.`;
 
   return [
     'BEGIN:VCALENDAR',

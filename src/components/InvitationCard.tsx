@@ -150,8 +150,9 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         </p>
 
         <div className="coordinator-line">
-          <span>संयोजक</span>
-          <strong>{EVENT.coordinator}</strong>
+          <span>अध्यक्ष</span>
+          <strong>{EVENT.president}</strong>
+          <small>{EVENT.presidentMandalName}</small>
           <small>{EVENT.phoneDisplay}</small>
         </div>
 

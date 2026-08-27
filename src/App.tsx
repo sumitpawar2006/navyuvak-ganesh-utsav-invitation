@@ -493,7 +493,7 @@ export default function App() {
                     <Play aria-hidden="true" /> आपले आमंत्रण उघडा <ArrowRight aria-hidden="true" />
                   </button>
                   <a className="text-link" href={`tel:${EVENT.phone}`}>
-                    <Phone aria-hidden="true" /> संयोजकाशी संपर्क करा
+                    <Phone aria-hidden="true" /> अध्यक्षांशी संपर्क करा
                   </a>
                 </div>
 
@@ -645,7 +645,7 @@ export default function App() {
 
       <footer className="site-footer">
         <span>{EVENT.mandalName} • {EVENT.locality}</span>
-        <a href={`tel:${EVENT.phone}`}>{EVENT.coordinator} • {EVENT.phoneDisplay}</a>
+        <a href={`tel:${EVENT.phone}`}>{EVENT.president} • {EVENT.phoneDisplay}</a>
       </footer>
 
       <CelebrationOverlay visible={rsvp === 'attending'} />
