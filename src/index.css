@@ -1608,6 +1608,23 @@ a {
   color: var(--saffron);
 }
 
+.action-feedback {
+  min-height: 2.2rem;
+  margin-top: 0.45rem;
+  padding: 0.55rem 0.7rem;
+  border-top: 1px solid rgba(231, 183, 86, 0.12);
+  color: #d7bd94;
+  font-size: 0.65rem;
+  line-height: 1.45;
+}
+
+.action-feedback:empty {
+  min-height: 0;
+  margin-top: 0;
+  padding: 0;
+  border-top: 0;
+}
+
 .site-footer {
   width: min(1180px, calc(100% - 2rem));
   margin: 0 auto;

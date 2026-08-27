@@ -33,7 +33,29 @@ const saveBlob = (content: string, type: string, filename: string) => {
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
-  URL.revokeObjectURL(url);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+};
+
+const copyText = async (value: string) => {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return;
+    } catch {
+      // Continue to the mobile-browser fallback below.
+    }
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = value;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand('copy');
+  textarea.remove();
+  if (!copied) throw new Error('Clipboard unavailable');
 };
 
 export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCardProps) {
@@ -41,27 +63,42 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
 
   const shareUrl = `${window.location.origin}${window.location.pathname}?guest=${encodeURIComponent(guestName)}`;
   const shareText = buildShareText(guestName);
 
   const addToCalendar = () => {
-    saveBlob(buildCalendarFile(guestName), 'text/calendar;charset=utf-8', 'Ganesh_Utsav_2026.ics');
+    try {
+      saveBlob(buildCalendarFile(guestName), 'text/calendar;charset=utf-8', 'Ganesh_Utsav_2026.ics');
+      setActionMessage('कॅलेंडर फाइल डाउनलोड झाली. ती उघडून कार्यक्रम जतन करा.');
+    } catch {
+      setActionMessage('कॅलेंडर फाइल तयार झाली नाही. कृपया पुन्हा प्रयत्न करा.');
+    }
   };
 
   const shareInvitation = async () => {
     if (navigator.share) {
       try {
         await navigator.share({ title: `${EVENT.title} आमंत्रण`, text: shareText, url: shareUrl });
+        setActionMessage('आमंत्रण यशस्वीपणे शेअर झाले.');
         return;
       } catch (error) {
-        if ((error as DOMException)?.name === 'AbortError') return;
+        if ((error as DOMException)?.name === 'AbortError') {
+          setActionMessage('शेअर करणे रद्द केले.');
+          return;
+        }
       }
     }
 
-    await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2200);
+    try {
+      await copyText(`${shareText}\n${shareUrl}`);
+      setCopied(true);
+      setActionMessage('आमंत्रणाची लिंक कॉपी झाली. आता ती कुठेही शेअर करा.');
+      window.setTimeout(() => setCopied(false), 2200);
+    } catch {
+      setActionMessage('लिंक कॉपी झाली नाही. WhatsApp बटण वापरून शेअर करा.');
+    }
   };
 
   const downloadInvitation = async () => {
@@ -80,6 +117,9 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+      setActionMessage('आमंत्रणाचे चित्र डाउनलोड झाले.');
+    } catch {
+      setActionMessage('आमंत्रणाचे चित्र तयार झाले नाही. कृपया पुन्हा प्रयत्न करा.');
     } finally {
       setIsDownloading(false);
     }
@@ -173,6 +213,7 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
 
           <div className="rsvp-buttons">
             <button
+              type="button"
               className={rsvp === 'attending' ? 'rsvp-button yes selected' : 'rsvp-button yes'}
               onClick={() => onRsvp('attending')}
               aria-pressed={rsvp === 'attending'}
@@ -180,6 +221,7 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
               <CheckCircle2 aria-hidden="true" /> मी येणार आहे
             </button>
             <button
+              type="button"
               className={rsvp === 'not-attending' ? 'rsvp-button no selected' : 'rsvp-button no'}
               onClick={() => onRsvp('not-attending')}
               aria-pressed={rsvp === 'not-attending'}
@@ -201,25 +243,28 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         <div className="action-panel compact">
           <span className="panel-label">जतन करा व शेअर करा</span>
           <div className="action-list">
-            <button onClick={addToCalendar}>
+            <button type="button" onClick={addToCalendar}>
               <CalendarPlus aria-hidden="true" /> कॅलेंडरमध्ये जोडा
             </button>
-            <a href={EVENT.mapUrl} target="_blank" rel="noreferrer">
+            <a href={EVENT.mapUrl} target="_blank" rel="noreferrer" onClick={() => setActionMessage('Google Maps मध्ये अचूक स्थळ उघडत आहे…')}>
               <Navigation aria-hidden="true" /> मार्गदर्शन मिळवा
             </a>
-            <button onClick={shareInvitation}>
+            <button type="button" onClick={shareInvitation}>
               {copied ? <Copy aria-hidden="true" /> : <Share2 aria-hidden="true" />}
               {copied ? 'लिंक कॉपी झाली' : 'आमंत्रण शेअर करा'}
             </button>
-            <a href={whatsAppUrl} target="_blank" rel="noreferrer">
+            <a href={whatsAppUrl} target="_blank" rel="noreferrer" onClick={() => setActionMessage('WhatsApp मध्ये तयार संदेश उघडत आहे…')}>
               <MessageCircle aria-hidden="true" /> WhatsApp वर शेअर करा
             </a>
-            <button onClick={downloadInvitation} disabled={isDownloading}>
+            <button type="button" onClick={downloadInvitation} disabled={isDownloading}>
               <Download aria-hidden="true" /> {isDownloading ? 'चित्र तयार होत आहे…' : 'आमंत्रण डाउनलोड करा'}
             </button>
-            <a href={`tel:${EVENT.phone}`}>
+            <a href={`tel:${EVENT.phone}`} onClick={() => setActionMessage('अध्यक्षांना कॉल करण्यासाठी फोन उघडत आहे…')}>
               <Phone aria-hidden="true" /> {EVENT.phoneDisplay} वर कॉल करा
             </a>
+          </div>
+          <div className="action-feedback" role="status" aria-live="polite">
+            {actionMessage}
           </div>
         </div>
       </aside>

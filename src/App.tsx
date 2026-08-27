@@ -491,7 +491,7 @@ export default function App() {
       <div className="mandala mandala-right" aria-hidden="true" />
 
       <header className="site-header">
-        <button className="brand-lockup" onClick={reset} aria-label="आमंत्रणाच्या स्वागत पृष्ठावर परत जा">
+        <button type="button" className="brand-lockup" onClick={reset} aria-label="आमंत्रणाच्या स्वागत पृष्ठावर परत जा">
           <img src={EVENT.logoPath} alt="" width="48" height="48" />
           <span>
             <strong>{EVENT.mandalName}</strong>
@@ -500,6 +500,7 @@ export default function App() {
         </button>
 
         <button
+          type="button"
           className="icon-button"
           onClick={() => {
             if (isMuted) {
@@ -551,7 +552,7 @@ export default function App() {
                 </p>
 
                 <div className="hero-actions">
-                  <button className="primary-button" onClick={openInvitation}>
+                  <button type="button" className="primary-button" onClick={openInvitation}>
                     <Play aria-hidden="true" /> आपले आमंत्रण उघडा <ArrowRight aria-hidden="true" />
                   </button>
                   <a className="text-link" href={`tel:${EVENT.phone}`}>
@@ -687,6 +688,7 @@ export default function App() {
                 </div>
                 <div className="toolbar-actions">
                   <button
+                    type="button"
                     className="compact-button"
                     onClick={() => {
                       if (isSpeaking) {
@@ -700,7 +702,7 @@ export default function App() {
                     {isSpeaking ? <Square aria-hidden="true" /> : <Volume2 aria-hidden="true" />}
                     {isSpeaking ? 'आवाज थांबवा' : 'आमंत्रण ऐका'}
                   </button>
-                  <button className="compact-button" onClick={reset}>
+                  <button type="button" className="compact-button" onClick={reset}>
                     <RotateCcw aria-hidden="true" /> पुन्हा सुरुवात करा
                   </button>
                 </div>
