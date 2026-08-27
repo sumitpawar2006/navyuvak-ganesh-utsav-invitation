@@ -703,6 +703,7 @@ export default function App() {
 
       <footer className="site-footer">
         <span>{EVENT.mandalName} • {EVENT.locality}</span>
+        <span className="developer-credit">Developed by <strong>Sumit Pawar</strong></span>
         <a href={`tel:${EVENT.phone}`}>{EVENT.president} • {EVENT.phoneDisplay}</a>
       </footer>
 

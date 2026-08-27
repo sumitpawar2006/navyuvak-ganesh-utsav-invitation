@@ -1533,8 +1533,20 @@ a {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
+  align-items: center;
   color: #9f8e77;
   font-size: 0.65rem;
+}
+
+.developer-credit {
+  color: #c8b89f;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.developer-credit strong {
+  color: var(--gold-bright);
+  font-weight: 700;
 }
 
 .site-footer a {
