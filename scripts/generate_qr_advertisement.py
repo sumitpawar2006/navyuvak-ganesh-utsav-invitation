@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 import qrcode
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
@@ -10,29 +11,48 @@ from qrcode.constants import ERROR_CORRECT_H
 ROOT = Path(__file__).resolve().parents[1]
 PUBLIC = ROOT / "public"
 LOGO_PATH = PUBLIC / "assets" / "navyuvak-mandal-2026.jpeg"
+EVENT_SOURCE_PATH = ROOT / "src" / "event.ts"
 INVITATION_URL = "https://navyuvak-ganesh-utsav-2026.vercel.app"
+POSTER_LOCALITY = "म्हाडा कॉलनी, नागपूर"
+POSTER_ADDRESS_LINE_1 = "म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक,"
+POSTER_ADDRESS_LINE_2 = "नागपूर"
 
-GREETING = "गणपती बाप्पा मोरया!"
-EVENT_TITLE = "गणेशोत्सव २०२६"
-MANDAL_NAME = "नवयुवक गणेश उत्सव मंडळ"
-LOCALITY = "म्हाडा कॉलनी, नागपूर"
-EVENT_DATE = "१४ सप्टेंबर २०२६"
-EVENT_TIME = "सायंकाळी ६:०० वाजता"
-VENUE_NAME = "सार्वजनिक मैदान"
-ADDRESS_LINE_1 = "म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक,"
-ADDRESS_LINE_2 = "एमआयडीसी, हिंगणा रोड, नागपूर – ४४००१६"
-PRESIDENT = "मंगेश चंद्रकांत खडतकर"
-PRESIDENT_MANDAL = "नवयुवक म्हाडा गणेश उत्सव मंडळ"
-PHONE = "८८८८६६५५३६"
-
-MARATHI_REGULAR = Path(r"C:\Windows\Fonts\mangal.ttf")
-MARATHI_BOLD = Path(r"C:\Windows\Fonts\mangalb.ttf")
+MARATHI_FONT = Path(r"C:\Windows\Fonts\Nirmala.ttc")
+MARATHI_REGULAR = (MARATHI_FONT, 0)
+MARATHI_BOLD = (MARATHI_FONT, 1)
 LATIN_REGULAR = Path(r"C:\Windows\Fonts\segoeui.ttf")
 LATIN_BOLD = Path(r"C:\Windows\Fonts\segoeuib.ttf")
 
 RAW_QR_PATH = PUBLIC / "navyuvak-ganesh-utsav-qr.png"
 SOCIAL_POSTER_PATH = PUBLIC / "navyuvak-ganesh-utsav-qr-advertisement.png"
 PRINT_POSTER_PATH = PUBLIC / "navyuvak-ganesh-utsav-qr-print-a4.png"
+
+
+def load_event_details() -> dict[str, str]:
+    """Read the same Marathi event copy that powers the invitation website."""
+    source = EVENT_SOURCE_PATH.read_text(encoding="utf-8")
+    keys = (
+        "mandalName",
+        "locality",
+        "title",
+        "dateDisplay",
+        "timeDisplay",
+        "venueName",
+        "address",
+        "president",
+        "presidentMandalName",
+        "phoneDisplay",
+    )
+    details: dict[str, str] = {}
+    for key in keys:
+        match = re.search(rf"\b{key}:\s*'([^']+)'", source)
+        if match is None:
+            raise ValueError(f"Could not find {key!r} in {EVENT_SOURCE_PATH}")
+        details[key] = match.group(1)
+    return details
+
+
+EVENT = load_event_details()
 
 
 def make_qr() -> Image.Image:
@@ -47,8 +67,11 @@ def make_qr() -> Image.Image:
     return qr.make_image(fill_color="#160303", back_color="#fffaf0").convert("RGB")
 
 
-def font(path: Path, size: float) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(str(path), max(10, round(size)))
+def font(source: Path | tuple[Path, int], size: float) -> ImageFont.FreeTypeFont:
+    if isinstance(source, tuple):
+        path, index = source
+        return ImageFont.truetype(str(path), max(10, round(size)), index=index)
+    return ImageFont.truetype(str(source), max(10, round(size)))
 
 
 def add_glow(canvas: Image.Image, center: tuple[int, int], radius: int, color: tuple[int, int, int]) -> None:
@@ -115,7 +138,7 @@ def draw_centered(
     draw: ImageDraw.ImageDraw,
     text: str,
     y: int,
-    font_path: Path,
+    font_path: Path | tuple[Path, int],
     size: float,
     fill: tuple[int, int, int, int],
     max_width: int,
@@ -175,11 +198,11 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
     muted = (222, 205, 178, 255)
     max_text_width = sx(900)
 
-    draw_centered(draw, GREETING, sy(270), MARATHI_BOLD, sx(38), gold, max_text_width)
+    draw_centered(draw, "गणपती बाप्पा मोरया!", sy(242), MARATHI_BOLD, sx(38), gold, max_text_width)
     draw_centered(
         draw,
-        EVENT_TITLE,
-        sy(350),
+        EVENT["title"],
+        sy(315),
         MARATHI_BOLD,
         sx(76),
         ivory,
@@ -187,10 +210,10 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
         stroke_width=max(1, sx(1.4)),
         stroke_fill=(77, 12, 7, 255),
     )
-    draw_centered(draw, MANDAL_NAME, sy(448), MARATHI_BOLD, sx(40), gold, max_text_width)
-    draw_centered(draw, LOCALITY, sy(505), MARATHI_REGULAR, sx(28), muted, max_text_width)
+    draw_centered(draw, EVENT["mandalName"], sy(410), MARATHI_BOLD, sx(42), gold, max_text_width)
+    draw_centered(draw, POSTER_LOCALITY, sy(466), MARATHI_REGULAR, sx(32), muted, max_text_width)
 
-    line_y = sy(550)
+    line_y = sy(520)
     line_half_width = sx(365)
     draw.line(
         (width // 2 - line_half_width, line_y, width // 2 + line_half_width, line_y),
@@ -199,10 +222,10 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
     )
     draw.ellipse((width // 2 - sx(6), line_y - sx(6), width // 2 + sx(6), line_y + sx(6)), fill=(255, 178, 26, 220))
 
-    qr_size = sx(539)
+    qr_size = sx(441)
     qr_x = (width - qr_size) // 2
-    qr_y = sy(590)
-    padding = sx(26)
+    qr_y = sy(560)
+    padding = sx(25)
     draw.rounded_rectangle(
         (qr_x - padding, qr_y - padding, qr_x + qr_size + padding, qr_y + qr_size + padding),
         radius=sx(24),
@@ -215,18 +238,27 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
 
     draw_centered(
         draw,
-        "डिजिटल आमंत्रण पाहण्यासाठी क्यूआर कोड स्कॅन करा",
-        sy(1200),
+        "डिजिटल आमंत्रण पाहण्यासाठी",
+        sy(1055),
         MARATHI_BOLD,
-        sx(37),
+        sx(44),
+        gold,
+        max_text_width,
+    )
+    draw_centered(
+        draw,
+        "क्यूआर कोड स्कॅन करा",
+        sy(1110),
+        MARATHI_BOLD,
+        sx(44),
         gold,
         max_text_width,
     )
 
     card_left = width // 2 - sx(450)
     card_right = width // 2 + sx(450)
-    card_top = sy(1270)
-    card_bottom = sy(1555)
+    card_top = sy(1165)
+    card_bottom = sy(1500)
     draw.rounded_rectangle(
         (card_left, card_top, card_right, card_bottom),
         radius=sx(24),
@@ -237,59 +269,52 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
 
     draw_centered(
         draw,
-        f"दिनांक: {EVENT_DATE}",
-        sy(1325),
+        f"दिनांक: {EVENT['dateDisplay']}",
+        sy(1215),
         MARATHI_BOLD,
-        sx(30),
+        sx(38),
         ivory,
         sx(820),
     )
     draw_centered(
         draw,
-        f"वेळ: {EVENT_TIME}",
-        sy(1380),
+        f"वेळ: {EVENT['timeDisplay']}",
+        sy(1275),
         MARATHI_BOLD,
-        sx(30),
+        sx(38),
         ivory,
         sx(820),
     )
     draw_centered(
         draw,
-        f"स्थळ: {VENUE_NAME}",
-        sy(1435),
+        f"स्थळ: {EVENT['venueName']}",
+        sy(1335),
         MARATHI_BOLD,
-        sx(29),
+        sx(38),
         gold,
         sx(820),
     )
-    draw_centered(
-        draw,
-        ADDRESS_LINE_1,
-        sy(1480),
-        MARATHI_REGULAR,
-        sx(24),
-        muted,
-        sx(820),
-    )
-    draw_centered(
-        draw,
-        ADDRESS_LINE_2,
-        sy(1520),
-        MARATHI_REGULAR,
-        sx(24),
-        muted,
-        sx(820),
-    )
 
-    draw_centered(draw, "अध्यक्ष", sy(1620), MARATHI_BOLD, sx(27), gold, max_text_width)
-    draw_centered(draw, PRESIDENT, sy(1668), MARATHI_BOLD, sx(34), ivory, max_text_width)
-    draw_centered(draw, PRESIDENT_MANDAL, sy(1714), MARATHI_REGULAR, sx(25), muted, max_text_width)
-    draw_centered(draw, PHONE, sy(1758), MARATHI_BOLD, sx(27), gold, max_text_width)
+    draw_centered(
+        draw,
+        POSTER_ADDRESS_LINE_1,
+        sy(1400),
+        MARATHI_REGULAR,
+        sx(36),
+        muted,
+        sx(820),
+    )
+    draw_centered(draw, POSTER_ADDRESS_LINE_2, sy(1455), MARATHI_REGULAR, sx(36), muted, sx(820))
+
+    draw_centered(draw, "अध्यक्ष", sy(1555), MARATHI_BOLD, sx(30), gold, max_text_width)
+    draw_centered(draw, EVENT["president"], sy(1610), MARATHI_BOLD, sx(38), ivory, max_text_width)
+    draw_centered(draw, EVENT["presidentMandalName"], sy(1665), MARATHI_REGULAR, sx(30), muted, max_text_width)
+    draw_centered(draw, EVENT["phoneDisplay"], sy(1715), MARATHI_BOLD, sx(34), gold, max_text_width)
 
     draw_centered(
         draw,
         "navyuvak-ganesh-utsav-2026.vercel.app",
-        sy(1805),
+        sy(1780),
         LATIN_REGULAR,
         sx(19),
         (202, 184, 159, 255),
@@ -298,7 +323,7 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
     draw_centered(
         draw,
         "Developed by Sumit Pawar",
-        sy(1850),
+        sy(1830),
         LATIN_BOLD,
         sx(17),
         (231, 183, 86, 210),
