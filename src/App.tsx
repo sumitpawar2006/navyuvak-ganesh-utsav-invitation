@@ -35,11 +35,28 @@ const NARRATION_AUDIO = {
 
 const WELCOME_SPEECH = `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`;
 
+const INDIAN_NAME_LANGUAGES = [
+  { language: 'mr-IN', label: 'मराठीत' },
+  { language: 'hi-IN', label: 'हिंदीत' },
+  { language: 'en-IN', label: 'भारतीय इंग्रजीत' },
+  { language: 'gu-IN', label: 'ગુજરાતીમાં' },
+  { language: 'bn-IN', label: 'বাংলায়' },
+  { language: 'pa-IN', label: 'ਪੰਜਾਬੀ ਵਿੱਚ' },
+  { language: 'ta-IN', label: 'தமிழில்' },
+  { language: 'te-IN', label: 'తెలుగులో' },
+  { language: 'kn-IN', label: 'ಕನ್ನಡದಲ್ಲಿ' },
+  { language: 'ml-IN', label: 'മലയാളത്തിൽ' },
+  { language: 'ur-IN', label: 'اردو میں' },
+] as const;
+
 const cleanGuestName = (value: string) =>
   value
     .trim()
-    .replace(/^(नमस्कार|हॅलो|हाय)\s+/u, '')
+    .replace(/^(नमस्कार|हॅलो|हाय|नमस्ते)\s+/u, '')
+    .replace(/^(hello|hi|hey)\s+/i, '')
     .replace(/^(माझे नाव आहे|माझं नाव आहे|माझे नाव|माझं नाव|मी)\s+/u, '')
+    .replace(/^(मेरा नाम है|मेरा नाम|मैं)\s+/u, '')
+    .replace(/^(my name is|i am|i'm|this is)\s+/i, '')
     .replace(/[!?.,।]+$/g, '')
     .replace(/\s+/g, ' ')
     .split(' ')
@@ -123,12 +140,14 @@ export default function App() {
     () => Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
   );
   const recognitionRef = useRef<any>(null);
+  const recognitionSessionRef = useRef(0);
 
   useEffect(() => {
     primeNaturalVoices();
 
     return () => {
-      recognitionRef.current?.stop?.();
+      recognitionSessionRef.current += 1;
+      recognitionRef.current?.abort?.();
       cancelNaturalSpeech();
     };
   }, []);
@@ -144,7 +163,16 @@ export default function App() {
     };
   }, [step]);
 
-  const speak = (text: string, startDelayMs = 80, audioUrl?: string, forceSound = false) => {
+  const speak = (
+    text: string,
+    startDelayMs = 80,
+    audioUrl?: string,
+    forceSound = false,
+    onComplete?: () => void
+  ) => {
+    recognitionSessionRef.current += 1;
+    recognitionRef.current?.abort?.();
+    setIsListening(false);
     setSubtitle(text);
     if (isMuted && !forceSound) {
       setIsSpeaking(false);
@@ -161,6 +189,7 @@ export default function App() {
         setSpeechError('');
       },
       onEnd: () => setIsSpeaking(false),
+      onComplete,
       onError: () => {
         setIsSpeaking(false);
         setSubtitle('आवाज सुरू झाला नाही. फोनचा मीडिया आवाज वाढवा आणि “पुन्हा ऐका” दाबा.');
@@ -170,84 +199,171 @@ export default function App() {
 
   const openInvitation = () => {
     setStep('personalize');
-    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome);
+    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, false, startListening);
   };
 
   const startListening = () => {
     setSpeechError('');
     cancelNaturalSpeech();
     setIsSpeaking(false);
+    recognitionSessionRef.current += 1;
+    recognitionRef.current?.abort?.();
+    const sessionId = recognitionSessionRef.current;
 
     if (!supportsVoiceName) {
       setSpeechError('आवाजातून नाव देण्यासाठी हा दुवा Chrome किंवा Edge मध्ये उघडा. येथे नाव टाइप करूनही पुढे जाता येईल.');
+      setSubtitle('मायक्रोफोन उपलब्ध नाही. कृपया आपले नाव खाली टाइप करा.');
       return;
     }
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    recognitionRef.current?.stop?.();
-    const recognition = new SpeechRecognition();
+    const deviceLanguages = (window.navigator.languages?.length
+      ? window.navigator.languages
+      : [window.navigator.language]
+    ).filter(Boolean);
+    const deviceModes = deviceLanguages.map((language) => ({ language, label: 'फोनच्या भाषेत' }));
+    const recognitionModes = [...deviceModes, ...INDIAN_NAME_LANGUAGES].filter(
+      (mode, index, modes) => modes.findIndex(
+        (candidate) => candidate.language.toLowerCase() === mode.language.toLowerCase()
+      ) === index
+    );
+    let modeIndex = 0;
     let recognizedName = '';
-    let recognitionFailed = false;
-    recognitionRef.current = recognition;
-    recognition.lang = 'mr-IN';
-    recognition.interimResults = true;
-    recognition.continuous = false;
-    recognition.maxAlternatives = 3;
+    let latestName = '';
+    let retryAfterEnd = false;
+    let finalError = '';
+    let invitationOpened = false;
 
-    recognition.onstart = () => {
-      setIsListening(true);
-      setSubtitle('आपले नाव ऐकत आहे…');
-    };
-
-    recognition.onresult = (event: any) => {
-      let transcript = '';
-      for (let index = event.resultIndex; index < event.results.length; index += 1) {
-        transcript += event.results[index][0].transcript;
-      }
-      const name = cleanGuestName(transcript);
-      if (name) {
-        recognizedName = name;
-        setTypedName(name);
-      }
-    };
-
-    recognition.onerror = (event: any) => {
-      recognitionFailed = true;
+    const openDetectedInvitation = (name: string) => {
+      if (invitationOpened || recognitionSessionRef.current !== sessionId) return;
+      invitationOpened = true;
       setIsListening(false);
-      const messages: Record<string, string> = {
-        'not-allowed': 'मायक्रोफोनची परवानगी मिळाली नाही. ब्राउझर सेटिंगमध्ये मायक्रोफोन सुरू करा किंवा नाव टाइप करा.',
-        'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. दुसरे अॅप बंद करून पुन्हा प्रयत्न करा किंवा नाव टाइप करा.',
-        network: 'आवाज ओळख सेवा सध्या उपलब्ध नाही. कृपया नाव टाइप करा.',
-        'no-speech': 'नाव ऐकू आले नाही. माइकजवळ स्पष्ट बोला किंवा नाव टाइप करा.',
+      setTypedName(name);
+      setSubtitle(`${name} हे नाव मिळाले. आपले आमंत्रण तयार करत आहे…`);
+      window.setTimeout(() => {
+        if (recognitionSessionRef.current === sessionId) revealInvitation(name);
+      }, 650);
+    };
+
+    const startRecognitionAttempt = () => {
+      if (recognitionSessionRef.current !== sessionId) return;
+
+      const currentMode = recognitionModes[modeIndex];
+      const recognition = new SpeechRecognition();
+      recognitionRef.current = recognition;
+      recognition.lang = currentMode.language;
+      recognition.interimResults = true;
+      recognition.continuous = false;
+      recognition.maxAlternatives = 5;
+      if ('processLocally' in recognition) recognition.processLocally = false;
+
+      recognition.onstart = () => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        setIsListening(true);
+        setSpeechError('');
+        setSubtitle(`मायक्रोफोन सुरू आहे. आता आपले नाव ${currentMode.label} स्पष्ट बोला…`);
       };
-      setSpeechError(messages[event.error] ?? 'नाव स्पष्ट ऐकू आले नाही. पुन्हा प्रयत्न करा किंवा नाव टाइप करा.');
-    };
 
-    recognition.onnomatch = () => {
-      recognitionFailed = true;
-      setSpeechError('नाव ओळखता आले नाही. कृपया पुन्हा स्पष्ट बोला किंवा नाव टाइप करा.');
-    };
+      recognition.onresult = (event: any) => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        let transcript = '';
+        let hasFinalResult = false;
 
-    recognition.onend = () => {
-      setIsListening(false);
-      if (recognitionFailed) return;
-      if (recognizedName) {
-        setSubtitle(`${recognizedName} हे नाव नोंदवले आहे. कृपया तपासून पुढे जा.`);
-      } else {
-        setSpeechError('नाव ऐकू आले नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.');
-        setSubtitle('नाव ऐकू आले नाही. कृपया पुन्हा प्रयत्न करा.');
+        for (let index = 0; index < event.results.length; index += 1) {
+          transcript += ` ${event.results[index][0].transcript}`;
+          if (event.results[index].isFinal) hasFinalResult = true;
+        }
+
+        const name = cleanGuestName(transcript);
+        if (!name) return;
+        latestName = name;
+        if (hasFinalResult) recognizedName = name;
+        setTypedName(name);
+        setSpeechError('');
+        setSubtitle(hasFinalResult ? `${name} हे नाव ऐकले आहे…` : `${name} असे ऐकू येत आहे…`);
+        if (hasFinalResult) recognition.stop();
+      };
+
+      recognition.onerror = (event: any) => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        setIsListening(false);
+        const errorCode = String(event.error ?? 'unknown');
+        const canTryAnotherLanguage = ['language-not-supported', 'language-unavailable'].includes(errorCode)
+          && modeIndex < recognitionModes.length - 1;
+        const canRetryListening = ['network', 'no-speech'].includes(errorCode)
+          && modeIndex < Math.min(2, recognitionModes.length - 1);
+        const canRetry = canTryAnotherLanguage || canRetryListening;
+
+        if (canRetry) {
+          modeIndex += 1;
+          retryAfterEnd = true;
+          finalError = '';
+          setSpeechError('');
+          setSubtitle(`${recognitionModes[modeIndex].label} पुन्हा नाव ऐकण्याचा प्रयत्न करत आहे…`);
+          return;
+        }
+
+        const messages: Record<string, string> = {
+          'not-allowed': 'मायक्रोफोनची परवानगी मिळाली नाही. ब्राउझर सेटिंगमध्ये मायक्रोफोन सुरू करा किंवा नाव टाइप करा.',
+          'service-not-allowed': 'या ब्राउझरने आवाज ओळख सेवा रोखली आहे. Chrome मध्ये दुवा उघडा किंवा नाव टाइप करा.',
+          'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. दुसरे अॅप बंद करून पुन्हा प्रयत्न करा किंवा नाव टाइप करा.',
+          network: 'मोबाइलवरील आवाज ओळख सेवेशी संपर्क झाला नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.',
+          'no-speech': 'नाव ऐकू आले नाही. माइकजवळ स्पष्ट बोला किंवा नाव टाइप करा.',
+          'language-not-supported': 'या फोनवर मराठी, हिंदी किंवा भारतीय इंग्रजी आवाज ओळख उपलब्ध नाही. कृपया नाव टाइप करा.',
+        };
+        finalError = messages[errorCode] ?? 'नाव स्पष्ट ऐकू आले नाही. पुन्हा प्रयत्न करा किंवा नाव टाइप करा.';
+        setSpeechError(finalError);
+        setSubtitle('नाव मिळाले नाही. कृपया पुन्हा “नाव बोला” दाबा.');
+      };
+
+      recognition.onnomatch = () => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        finalError = 'नाव ओळखता आले नाही. कृपया पुन्हा स्पष्ट बोला किंवा नाव टाइप करा.';
+        setSpeechError(finalError);
+        setIsListening(false);
+        setSubtitle('नाव ओळखता आले नाही. कृपया पुन्हा “नाव बोला” दाबा.');
+      };
+
+      recognition.onend = () => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        setIsListening(false);
+
+        const detectedName = recognizedName || latestName;
+        if (detectedName) {
+          openDetectedInvitation(detectedName);
+          return;
+        }
+
+        if (retryAfterEnd) {
+          retryAfterEnd = false;
+          window.setTimeout(startRecognitionAttempt, 300);
+          return;
+        }
+
+        if (!finalError) {
+          finalError = 'नाव ऐकू आले नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.';
+          setSpeechError(finalError);
+          setSubtitle('नाव मिळाले नाही. कृपया पुन्हा प्रयत्न करा.');
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch {
+        setIsListening(false);
+        finalError = 'मायक्रोफोन सुरू करता आला नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.';
+        setSpeechError(finalError);
+        setSubtitle('मायक्रोफोन सुरू झाला नाही. कृपया पुन्हा प्रयत्न करा.');
       }
     };
 
-    try {
-      recognition.start();
-    } catch {
-      setIsListening(false);
-      setSpeechError('आवाजातून नाव नोंदवता आले नाही. कृपया आपले नाव टाइप करा.');
-    }
+    setSubtitle('निवेदन पूर्ण झाले. मायक्रोफोन सुरू करत आहे…');
+    startRecognitionAttempt();
   };
 
   const revealInvitation = (name: string) => {
+    recognitionSessionRef.current += 1;
+    recognitionRef.current?.abort?.();
     const formattedName = cleanGuestName(name) || 'प्रिय भाविक';
     setGuestName(formattedName);
     setTypedName(formattedName === 'प्रिय भाविक' ? '' : formattedName);
@@ -272,7 +388,8 @@ export default function App() {
   };
 
   const reset = () => {
-    recognitionRef.current?.stop?.();
+    recognitionSessionRef.current += 1;
+    recognitionRef.current?.abort?.();
     cancelNaturalSpeech();
     window.history.replaceState({}, '', window.location.pathname);
     setStep('welcome');
@@ -326,7 +443,7 @@ export default function App() {
           onClick={() => {
             if (isMuted) {
               setIsMuted(false);
-              if (step === 'personalize') speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true);
+              if (step === 'personalize') speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true, startListening);
               else if (step === 'invitation') {
                 speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation, true);
               } else {
@@ -334,7 +451,10 @@ export default function App() {
               }
             } else {
               setIsMuted(true);
+              recognitionSessionRef.current += 1;
+              recognitionRef.current?.abort?.();
               cancelNaturalSpeech();
+              setIsListening(false);
               setIsSpeaking(false);
               setSubtitle('आवाज बंद आहे. पुन्हा सुरू करण्यासाठी स्पीकर बटण दाबा.');
             }
@@ -407,7 +527,7 @@ export default function App() {
               <div className="personalize-card devotional-frame">
                 <span className="eyebrow"><ShieldCheck aria-hidden="true" /> आपले आमंत्रण वैयक्तिक करा</span>
                 <h1>आपल्याला कोणत्या नावाने संबोधावे?</h1>
-                <p>आपले नाव बोला किंवा टाइप करा. आवाजातून नाव देणे ऐच्छिक असून त्याची प्रक्रिया आपल्या ब्राउझरमध्येच होते.</p>
+                <p>निवेदन पूर्ण होताच मायक्रोफोन आपोआप सुरू होईल. आपले नाव स्पष्ट बोला; नाव मिळताच आमंत्रण तयार होईल.</p>
 
                 <Avatar
                   expression={isListening ? 'listening' : isSpeaking ? 'talking' : 'idle'}
@@ -423,7 +543,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setIsMuted(false);
-                      speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true);
+                      speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true, startListening);
                     }}
                   >
                     <Volume2 aria-hidden="true" /> पुन्हा ऐका

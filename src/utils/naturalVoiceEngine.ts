@@ -6,12 +6,13 @@ type SpeechOptions = {
   audioUrl?: string;
   onStart?: () => void;
   onEnd?: () => void;
+  onComplete?: () => void;
   onError?: () => void;
 };
 
 type SpeechSession = {
   id: number;
-  finish: () => void;
+  finish: (didComplete?: boolean) => void;
 };
 
 let sessionCounter = 0;
@@ -173,14 +174,14 @@ export const cancelNaturalSpeech = () => {
 };
 
 export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
-  const { isMuted, startDelayMs = 80, audioUrl, onStart, onEnd, onError } = options;
+  const { isMuted, startDelayMs = 80, audioUrl, onStart, onEnd, onComplete, onError } = options;
   cancelNaturalSpeech();
 
   const sessionId = ++sessionCounter;
   let finished = false;
   let started = false;
 
-  const finish = () => {
+  const finish = (didComplete = false) => {
     if (finished) return;
     finished = true;
     if (activeSession?.id === sessionId) {
@@ -193,6 +194,7 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
       releaseActiveAudio();
     }
     onEnd?.();
+    if (didComplete) onComplete?.();
   };
 
   const fail = () => {
@@ -252,7 +254,7 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
           if (didFail) failedChunks += 1;
           if (completedChunks >= chunks.length) {
             if (failedChunks === chunks.length && !started) fail();
-            else finish();
+            else finish(true);
           }
         };
 
@@ -303,7 +305,7 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
   audio.volume = 1;
   audio.onplay = markStarted;
   audio.onplaying = markStarted;
-  audio.onended = finish;
+  audio.onended = () => finish(true);
   audio.onerror = fallbackToSpeech;
 
   // The audible play call stays inside the original tap handler. This is the
