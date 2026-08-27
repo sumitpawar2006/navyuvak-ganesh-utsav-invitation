@@ -723,6 +723,7 @@ a {
   align-items: center;
   justify-content: center;
   gap: 0.7rem;
+  flex-wrap: wrap;
   padding: 0.75rem 1rem;
   border-radius: 0.9rem;
   color: #eadfce;
@@ -730,6 +731,30 @@ a {
   border: 1px solid rgba(231, 183, 86, 0.16);
   font-size: 0.82rem;
   line-height: 1.55;
+}
+
+.subtitle-box > span {
+  flex: 1 1 14rem;
+  text-align: left;
+}
+
+.subtitle-replay {
+  min-height: 2.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid rgba(231, 183, 86, 0.32);
+  border-radius: 0.75rem;
+  color: var(--gold-bright);
+  background: rgba(122, 38, 12, 0.5);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.subtitle-replay:hover {
+  background: rgba(164, 51, 15, 0.65);
 }
 
 .subtitle-box svg {
@@ -850,6 +875,11 @@ a {
   background: rgba(181, 43, 15, 0.72);
 }
 
+.voice-button:disabled {
+  opacity: 0.55;
+  background: rgba(80, 57, 50, 0.55);
+}
+
 .voice-button svg {
   width: 1rem;
 }
@@ -862,6 +892,10 @@ a {
 
 .field-help {
   color: #a99881;
+}
+
+.voice-support-note {
+  color: #d7bd94;
 }
 
 .field-error {

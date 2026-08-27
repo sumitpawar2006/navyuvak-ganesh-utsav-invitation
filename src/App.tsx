@@ -22,7 +22,6 @@ import Avatar from './components/Avatar';
 import CelebrationOverlay from './components/CelebrationOverlay';
 import InvitationCard, { type RsvpStatus } from './components/InvitationCard';
 import { EVENT, buildInvitationSpeech } from './event';
-import { playCelebrationFanfare, playTempleChime } from './utils/audioEffects';
 import { cancelNaturalSpeech, primeNaturalVoices, speakNaturalText } from './utils/naturalVoiceEngine';
 
 type AppStep = 'welcome' | 'personalize' | 'invitation';
@@ -33,6 +32,8 @@ const NARRATION_AUDIO = {
   attending: '/audio/attending-marathi.mp3',
   notAttending: '/audio/not-attending-marathi.mp3',
 } as const;
+
+const WELCOME_SPEECH = `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`;
 
 const cleanGuestName = (value: string) =>
   value
@@ -118,6 +119,9 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState('');
   const [rsvp, setRsvp] = useState<RsvpStatus>('pending');
+  const [supportsVoiceName] = useState(
+    () => Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
+  );
   const recognitionRef = useRef<any>(null);
 
   useEffect(() => {
@@ -140,25 +144,33 @@ export default function App() {
     };
   }, [step]);
 
-  const speak = (text: string, startDelayMs = 80, audioUrl?: string) => {
+  const speak = (text: string, startDelayMs = 80, audioUrl?: string, forceSound = false) => {
     setSubtitle(text);
+    if (isMuted && !forceSound) {
+      setIsSpeaking(false);
+      setSubtitle('आवाज बंद आहे. वरचे स्पीकर बटण दाबून आवाज सुरू करा.');
+      return;
+    }
+
     speakNaturalText(text, {
-      isMuted,
+      isMuted: false,
       startDelayMs,
       audioUrl,
-      onStart: () => setIsSpeaking(true),
+      onStart: () => {
+        setIsSpeaking(true);
+        setSpeechError('');
+      },
       onEnd: () => setIsSpeaking(false),
+      onError: () => {
+        setIsSpeaking(false);
+        setSubtitle('आवाज सुरू झाला नाही. फोनचा मीडिया आवाज वाढवा आणि “पुन्हा ऐका” दाबा.');
+      },
     });
   };
 
   const openInvitation = () => {
-    playTempleChime();
     setStep('personalize');
-    speak(
-      `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`,
-      900,
-      NARRATION_AUDIO.welcome
-    );
+    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome);
   };
 
   const startListening = () => {
@@ -166,14 +178,16 @@ export default function App() {
     cancelNaturalSpeech();
     setIsSpeaking(false);
 
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      setSpeechError('या ब्राउझरमध्ये आवाजातून नाव देण्याची सुविधा उपलब्ध नाही. कृपया आपले नाव टाइप करा.');
+    if (!supportsVoiceName) {
+      setSpeechError('आवाजातून नाव देण्यासाठी हा दुवा Chrome किंवा Edge मध्ये उघडा. येथे नाव टाइप करूनही पुढे जाता येईल.');
       return;
     }
 
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     recognitionRef.current?.stop?.();
     const recognition = new SpeechRecognition();
+    let recognizedName = '';
+    let recognitionFailed = false;
     recognitionRef.current = recognition;
     recognition.lang = 'mr-IN';
     recognition.interimResults = true;
@@ -191,21 +205,38 @@ export default function App() {
         transcript += event.results[index][0].transcript;
       }
       const name = cleanGuestName(transcript);
-      if (name) setTypedName(name);
+      if (name) {
+        recognizedName = name;
+        setTypedName(name);
+      }
     };
 
     recognition.onerror = (event: any) => {
+      recognitionFailed = true;
       setIsListening(false);
-      setSpeechError(
-        event.error === 'not-allowed'
-          ? 'मायक्रोफोनची परवानगी मिळाली नाही. आपण खाली आपले नाव टाइप करू शकता.'
-          : 'आपले नाव स्पष्ट ऐकू आले नाही. कृपया पुन्हा प्रयत्न करा किंवा खाली नाव टाइप करा.'
-      );
+      const messages: Record<string, string> = {
+        'not-allowed': 'मायक्रोफोनची परवानगी मिळाली नाही. ब्राउझर सेटिंगमध्ये मायक्रोफोन सुरू करा किंवा नाव टाइप करा.',
+        'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. दुसरे अॅप बंद करून पुन्हा प्रयत्न करा किंवा नाव टाइप करा.',
+        network: 'आवाज ओळख सेवा सध्या उपलब्ध नाही. कृपया नाव टाइप करा.',
+        'no-speech': 'नाव ऐकू आले नाही. माइकजवळ स्पष्ट बोला किंवा नाव टाइप करा.',
+      };
+      setSpeechError(messages[event.error] ?? 'नाव स्पष्ट ऐकू आले नाही. पुन्हा प्रयत्न करा किंवा नाव टाइप करा.');
+    };
+
+    recognition.onnomatch = () => {
+      recognitionFailed = true;
+      setSpeechError('नाव ओळखता आले नाही. कृपया पुन्हा स्पष्ट बोला किंवा नाव टाइप करा.');
     };
 
     recognition.onend = () => {
       setIsListening(false);
-      setSubtitle('नाव नोंदवले आहे. कृपया तपासून पुढे जा.');
+      if (recognitionFailed) return;
+      if (recognizedName) {
+        setSubtitle(`${recognizedName} हे नाव नोंदवले आहे. कृपया तपासून पुढे जा.`);
+      } else {
+        setSpeechError('नाव ऐकू आले नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.');
+        setSubtitle('नाव ऐकू आले नाही. कृपया पुन्हा प्रयत्न करा.');
+      }
     };
 
     try {
@@ -222,14 +253,13 @@ export default function App() {
     setTypedName(formattedName === 'प्रिय भाविक' ? '' : formattedName);
     setRsvp('pending');
     setStep('invitation');
-    playTempleChime();
 
     const url = new URL(window.location.href);
     if (formattedName === 'प्रिय भाविक') url.searchParams.delete('guest');
     else url.searchParams.set('guest', formattedName);
     window.history.replaceState({}, '', url);
 
-    speak(buildInvitationSpeech(formattedName), 900, NARRATION_AUDIO.invitation);
+    speak(buildInvitationSpeech(formattedName), 80, NARRATION_AUDIO.invitation);
   };
 
   const submitName = (event: FormEvent) => {
@@ -259,10 +289,9 @@ export default function App() {
     setRsvp(status);
     const spokenGuest = guestName.replace(/^प्रिय\s+/u, '');
     if (status === 'attending') {
-      playCelebrationFanfare();
       speak(
         `धन्यवाद, ${spokenGuest}। आपण सहकुटुंब येणार असल्याचा आम्हाला आनंद आहे। गणपती बाप्पा मोरया!`,
-        1250,
+        80,
         NARRATION_AUDIO.attending
       );
     } else if (status === 'not-attending') {
@@ -295,9 +324,19 @@ export default function App() {
         <button
           className="icon-button"
           onClick={() => {
-            setIsMuted((current) => !current);
-            if (!isMuted) {
+            if (isMuted) {
+              setIsMuted(false);
+              if (step === 'personalize') speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true);
+              else if (step === 'invitation') {
+                speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation, true);
+              } else {
+                setSubtitle('आवाज सुरू आहे. आमंत्रण उघडल्यानंतर निवेदन ऐकू येईल.');
+              }
+            } else {
+              setIsMuted(true);
               cancelNaturalSpeech();
+              setIsSpeaking(false);
+              setSubtitle('आवाज बंद आहे. पुन्हा सुरू करण्यासाठी स्पीकर बटण दाबा.');
             }
           }}
           aria-label={isMuted ? 'आमंत्रणाचा आवाज सुरू करा' : 'आमंत्रणाचा आवाज बंद करा'}
@@ -379,6 +418,16 @@ export default function App() {
                 <div className="subtitle-box" aria-live="polite">
                   <Headphones aria-hidden="true" />
                   <span>{subtitle}</span>
+                  <button
+                    className="subtitle-replay"
+                    type="button"
+                    onClick={() => {
+                      setIsMuted(false);
+                      speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true);
+                    }}
+                  >
+                    <Volume2 aria-hidden="true" /> पुन्हा ऐका
+                  </button>
                 </div>
 
                 {isListening && <AudioWaveform isRecording />}
@@ -396,13 +445,27 @@ export default function App() {
                         setSpeechError('');
                       }}
                       placeholder="आपले पूर्ण नाव लिहा"
-                      aria-describedby={speechError ? 'name-error' : 'name-help'}
+                      aria-describedby={
+                        speechError ? 'name-help name-error' : supportsVoiceName ? 'name-help' : 'name-help voice-support-help'
+                      }
                     />
-                    <button className="voice-button" type="button" onClick={startListening} disabled={isListening}>
-                      <Mic aria-hidden="true" /> {isListening ? 'ऐकत आहे…' : 'नाव बोला'}
+                    <button
+                      className="voice-button"
+                      type="button"
+                      onClick={startListening}
+                      disabled={isListening || !supportsVoiceName}
+                      aria-describedby={!supportsVoiceName ? 'voice-support-help' : undefined}
+                    >
+                      <Mic aria-hidden="true" />
+                      {isListening ? 'ऐकत आहे…' : supportsVoiceName ? 'नाव बोला' : 'आवाज उपलब्ध नाही'}
                     </button>
                   </div>
                   <p id="name-help" className="field-help">आपले नाव फक्त हे आमंत्रण वैयक्तिक करण्यासाठी वापरले जाते.</p>
+                  {!supportsVoiceName && (
+                    <p id="voice-support-help" className="field-help voice-support-note">
+                      नाव बोलण्यासाठी हा दुवा Chrome किंवा Edge मध्ये उघडा; किंवा वर आपले नाव टाइप करा.
+                    </p>
+                  )}
                   {speechError && <p id="name-error" className="field-error" role="alert">{speechError}</p>}
 
                   <button className="primary-button" type="submit">
@@ -438,8 +501,7 @@ export default function App() {
                         cancelNaturalSpeech();
                         return;
                       }
-                      playTempleChime();
-                      speak(buildInvitationSpeech(guestName), 900, NARRATION_AUDIO.invitation);
+                      speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation);
                     }}
                     aria-pressed={isSpeaking}
                   >

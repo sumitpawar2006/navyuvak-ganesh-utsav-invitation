@@ -6,6 +6,7 @@ type SpeechOptions = {
   audioUrl?: string;
   onStart?: () => void;
   onEnd?: () => void;
+  onError?: () => void;
 };
 
 type SpeechSession = {
@@ -144,6 +145,7 @@ const releaseActiveAudio = () => {
   if (!activeAudio) return;
 
   activeAudio.onplay = null;
+  activeAudio.onplaying = null;
   activeAudio.onended = null;
   activeAudio.onerror = null;
   activeAudio.pause();
@@ -171,7 +173,7 @@ export const cancelNaturalSpeech = () => {
 };
 
 export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
-  const { isMuted, startDelayMs = 80, audioUrl, onStart, onEnd } = options;
+  const { isMuted, startDelayMs = 80, audioUrl, onStart, onEnd, onError } = options;
   cancelNaturalSpeech();
 
   const sessionId = ++sessionCounter;
@@ -193,18 +195,23 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
     onEnd?.();
   };
 
+  const fail = () => {
+    if (finished) return;
+    onError?.();
+    finish();
+  };
+
   activeSession = { id: sessionId, finish };
 
   if (isMuted) {
-    onStart?.();
-    startTimer = window.setTimeout(finish, 450);
+    finish();
     return;
   }
 
   const startSpeechSynthesis = () => {
     if (activeSession?.id !== sessionId) return;
     if (!window.speechSynthesis) {
-      finish();
+      fail();
       return;
     }
 
@@ -221,6 +228,7 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
       const selectedVoiceName = selectedVoice?.name.toLowerCase() ?? '';
       const hasNaturalVoice = /natural|neural|wavenet|online|enhanced|premium/.test(selectedVoiceName);
       let completedChunks = 0;
+      let failedChunks = 0;
 
       activeUtterances = chunks.map((chunk) => {
         const utterance = new SpeechSynthesisUtterance(chunk);
@@ -237,15 +245,19 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
           onStart?.();
         };
 
-        const markChunkComplete = () => {
+        const markChunkComplete = (didFail = false) => {
           if (activeSession?.id !== sessionId || chunkCompleted) return;
           chunkCompleted = true;
           completedChunks += 1;
-          if (completedChunks >= chunks.length) finish();
+          if (didFail) failedChunks += 1;
+          if (completedChunks >= chunks.length) {
+            if (failedChunks === chunks.length && !started) fail();
+            else finish();
+          }
         };
 
-        utterance.onend = markChunkComplete;
-        utterance.onerror = markChunkComplete;
+        utterance.onend = () => markChunkComplete();
+        utterance.onerror = () => markChunkComplete(true);
         return utterance;
       });
 
@@ -257,9 +269,9 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
           window.speechSynthesis.resume();
           activeUtterances.forEach((utterance) => window.speechSynthesis.speak(utterance));
         } catch {
-          finish();
+          fail();
         }
-      }, audioUrl ? 80 : Math.max(80, startDelayMs));
+      }, Math.max(80, startDelayMs));
     });
   };
 
@@ -269,10 +281,10 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
   }
 
   const audio = new Audio(audioUrl);
-  const requestedStartAt = Date.now() + Math.max(80, startDelayMs);
   let fallingBack = false;
   activeAudio = audio;
   audio.preload = 'auto';
+  audio.setAttribute('playsinline', '');
 
   const fallbackToSpeech = () => {
     if (fallingBack || activeSession?.id !== sessionId) return;
@@ -281,51 +293,22 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
     startSpeechSynthesis();
   };
 
-  const beginRecordedPlayback = () => {
-    startTimer = null;
-    if (activeSession?.id !== sessionId) return;
-
-    audio.muted = false;
-    audio.volume = 1;
-    try {
-      audio.currentTime = 0;
-    } catch {
-      // Playback can still begin normally when seeking is unavailable.
-    }
-
-    audio.onplay = () => {
-      if (activeSession?.id !== sessionId || started) return;
-      started = true;
-      onStart?.();
-    };
-    audio.onended = finish;
-    audio.onerror = fallbackToSpeech;
-    void audio.play().catch(fallbackToSpeech);
+  const markStarted = () => {
+    if (activeSession?.id !== sessionId || started) return;
+    started = true;
+    onStart?.();
   };
 
-  const scheduleRecordedPlayback = () => {
-    if (activeSession?.id !== sessionId) return;
-    const remainingDelay = Math.max(0, requestedStartAt - Date.now());
-    startTimer = window.setTimeout(beginRecordedPlayback, remainingDelay);
-  };
+  audio.muted = false;
+  audio.volume = 1;
+  audio.onplay = markStarted;
+  audio.onplaying = markStarted;
+  audio.onended = finish;
+  audio.onerror = fallbackToSpeech;
 
-  // Priming the same audio element immediately after the user's click makes
-  // delayed playback reliable on stricter mobile browsers.
-  audio.muted = true;
+  // The audible play call stays inside the original tap handler. This is the
+  // most reliable path in iOS Safari and WhatsApp's in-app browser.
   void audio.play()
-    .then(() => {
-      if (activeSession?.id !== sessionId) return;
-      audio.pause();
-      try {
-        audio.currentTime = 0;
-      } catch {
-        // The real playback below will begin from the available position.
-      }
-      audio.muted = false;
-      scheduleRecordedPlayback();
-    })
-    .catch(() => {
-      audio.muted = false;
-      scheduleRecordedPlayback();
-    });
+    .then(markStarted)
+    .catch(fallbackToSpeech);
 };
