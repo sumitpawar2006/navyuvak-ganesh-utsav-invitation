@@ -12,6 +12,19 @@ PUBLIC = ROOT / "public"
 LOGO_PATH = PUBLIC / "assets" / "navyuvak-mandal-2026.jpeg"
 INVITATION_URL = "https://navyuvak-ganesh-utsav-2026.vercel.app"
 
+GREETING = "गणपती बाप्पा मोरया!"
+EVENT_TITLE = "गणेशोत्सव २०२६"
+MANDAL_NAME = "नवयुवक गणेश उत्सव मंडळ"
+LOCALITY = "म्हाडा कॉलनी, नागपूर"
+EVENT_DATE = "१४ सप्टेंबर २०२६"
+EVENT_TIME = "सायंकाळी ६:०० वाजता"
+VENUE_NAME = "सार्वजनिक मैदान"
+ADDRESS_LINE_1 = "म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक,"
+ADDRESS_LINE_2 = "एमआयडीसी, हिंगणा रोड, नागपूर – ४४००१६"
+PRESIDENT = "मंगेश चंद्रकांत खडतकर"
+PRESIDENT_MANDAL = "नवयुवक म्हाडा गणेश उत्सव मंडळ"
+PHONE = "८८८८६६५५३६"
+
 MARATHI_REGULAR = Path(r"C:\Windows\Fonts\mangal.ttf")
 MARATHI_BOLD = Path(r"C:\Windows\Fonts\mangalb.ttf")
 LATIN_REGULAR = Path(r"C:\Windows\Fonts\segoeui.ttf")
@@ -130,8 +143,10 @@ def draw_centered(
 
 
 def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
-    scale = width / 1080
-    design_height = 1350 * scale
+    # The master layout is a 9:16 social poster. The same balanced layout is
+    # centred and scaled for the A4 print export without stretching any asset.
+    scale = min(width / 1080, height / 1920)
+    design_height = 1920 * scale
     offset_y = round((height - design_height) / 2)
 
     def sx(value: float) -> int:
@@ -144,9 +159,9 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
     add_background(canvas, scale)
     draw = ImageDraw.Draw(canvas, "RGBA")
 
-    logo_size = sx(150)
+    logo_size = sx(160)
     logo_x = (width - logo_size) // 2
-    logo_y = sy(58)
+    logo_y = sy(60)
     draw.ellipse(
         (logo_x - sx(7), logo_y - sx(7), logo_x + logo_size + sx(7), logo_y + logo_size + sx(7)),
         fill=(20, 3, 3, 245),
@@ -158,30 +173,36 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
     ivory = (255, 245, 223, 255)
     gold = (255, 215, 120, 255)
     muted = (222, 205, 178, 255)
-    max_text_width = width - sx(130)
+    max_text_width = sx(900)
 
-    draw_centered(draw, "गणपती बाप्पा मोरया!", sy(245), MARATHI_BOLD, sx(37), gold, max_text_width)
+    draw_centered(draw, GREETING, sy(270), MARATHI_BOLD, sx(38), gold, max_text_width)
     draw_centered(
         draw,
-        "गणेशोत्सव २०२६",
-        sy(315),
+        EVENT_TITLE,
+        sy(350),
         MARATHI_BOLD,
-        sx(72),
+        sx(76),
         ivory,
         max_text_width,
         stroke_width=max(1, sx(1.4)),
         stroke_fill=(77, 12, 7, 255),
     )
-    draw_centered(draw, "नवयुवक म्हाडा गणेश उत्सव मंडळ", sy(395), MARATHI_BOLD, sx(36), gold, max_text_width)
+    draw_centered(draw, MANDAL_NAME, sy(448), MARATHI_BOLD, sx(40), gold, max_text_width)
+    draw_centered(draw, LOCALITY, sy(505), MARATHI_REGULAR, sx(28), muted, max_text_width)
 
-    line_y = sy(435)
-    draw.line((sx(175), line_y, width - sx(175), line_y), fill=(231, 183, 86, 115), width=max(1, sx(2)))
+    line_y = sy(550)
+    line_half_width = sx(365)
+    draw.line(
+        (width // 2 - line_half_width, line_y, width // 2 + line_half_width, line_y),
+        fill=(231, 183, 86, 115),
+        width=max(1, sx(2)),
+    )
     draw.ellipse((width // 2 - sx(6), line_y - sx(6), width // 2 + sx(6), line_y + sx(6)), fill=(255, 178, 26, 220))
 
-    qr_size = sx(500)
+    qr_size = sx(539)
     qr_x = (width - qr_size) // 2
-    qr_y = sy(478)
-    padding = sx(24)
+    qr_y = sy(590)
+    padding = sx(26)
     draw.rounded_rectangle(
         (qr_x - padding, qr_y - padding, qr_x + qr_size + padding, qr_y + qr_size + padding),
         radius=sx(24),
@@ -194,44 +215,90 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
 
     draw_centered(
         draw,
-        "डिजिटल आमंत्रण पाहण्यासाठी स्कॅन करा",
-        sy(1058),
+        "डिजिटल आमंत्रण पाहण्यासाठी क्यूआर कोड स्कॅन करा",
+        sy(1200),
         MARATHI_BOLD,
-        sx(38),
+        sx(37),
         gold,
         max_text_width,
     )
+
+    card_left = width // 2 - sx(450)
+    card_right = width // 2 + sx(450)
+    card_top = sy(1270)
+    card_bottom = sy(1555)
+    draw.rounded_rectangle(
+        (card_left, card_top, card_right, card_bottom),
+        radius=sx(24),
+        fill=(13, 2, 2, 185),
+        outline=(231, 183, 86, 125),
+        width=max(1, sx(2)),
+    )
+
     draw_centered(
         draw,
-        "१४ सप्टेंबर २०२६  •  सायंकाळी ६:०० वाजता",
-        sy(1125),
+        f"दिनांक: {EVENT_DATE}",
+        sy(1325),
+        MARATHI_BOLD,
+        sx(30),
+        ivory,
+        sx(820),
+    )
+    draw_centered(
+        draw,
+        f"वेळ: {EVENT_TIME}",
+        sy(1380),
+        MARATHI_BOLD,
+        sx(30),
+        ivory,
+        sx(820),
+    )
+    draw_centered(
+        draw,
+        f"स्थळ: {VENUE_NAME}",
+        sy(1435),
         MARATHI_BOLD,
         sx(29),
-        ivory,
-        max_text_width,
+        gold,
+        sx(820),
     )
     draw_centered(
         draw,
-        "सार्वजनिक मैदान, म्हाडा कॉलनी, नागपूर",
-        sy(1177),
+        ADDRESS_LINE_1,
+        sy(1480),
         MARATHI_REGULAR,
-        sx(27),
+        sx(24),
         muted,
-        max_text_width,
+        sx(820),
     )
+    draw_centered(
+        draw,
+        ADDRESS_LINE_2,
+        sy(1520),
+        MARATHI_REGULAR,
+        sx(24),
+        muted,
+        sx(820),
+    )
+
+    draw_centered(draw, "अध्यक्ष", sy(1620), MARATHI_BOLD, sx(27), gold, max_text_width)
+    draw_centered(draw, PRESIDENT, sy(1668), MARATHI_BOLD, sx(34), ivory, max_text_width)
+    draw_centered(draw, PRESIDENT_MANDAL, sy(1714), MARATHI_REGULAR, sx(25), muted, max_text_width)
+    draw_centered(draw, PHONE, sy(1758), MARATHI_BOLD, sx(27), gold, max_text_width)
+
     draw_centered(
         draw,
         "navyuvak-ganesh-utsav-2026.vercel.app",
-        sy(1240),
+        sy(1805),
         LATIN_REGULAR,
-        sx(20),
+        sx(19),
         (202, 184, 159, 255),
         max_text_width,
     )
     draw_centered(
         draw,
         "Developed by Sumit Pawar",
-        sy(1292),
+        sy(1850),
         LATIN_BOLD,
         sx(17),
         (231, 183, 86, 210),
@@ -244,7 +311,7 @@ def render_poster(width: int, height: int, output_path: Path, dpi: int) -> None:
 def main() -> None:
     qr_image = make_qr()
     qr_image.save(RAW_QR_PATH, dpi=(300, 300), optimize=True)
-    render_poster(1080, 1350, SOCIAL_POSTER_PATH, 144)
+    render_poster(1080, 1920, SOCIAL_POSTER_PATH, 144)
     render_poster(2480, 3508, PRINT_POSTER_PATH, 300)
     print(RAW_QR_PATH)
     print(SOCIAL_POSTER_PATH)
