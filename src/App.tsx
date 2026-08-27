@@ -161,7 +161,7 @@ export default function App() {
     if (!showCurtain) return;
     const timer = window.setTimeout(
       () => setShowCurtain(false),
-      prefersReducedMotion ? 80 : 1700
+      prefersReducedMotion ? 1050 : 2250
     );
     return () => window.clearTimeout(timer);
   }, [prefersReducedMotion, showCurtain]);
@@ -446,25 +446,25 @@ export default function App() {
             aria-hidden="true"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0.01 : 0.22 }}
+            transition={{ duration: prefersReducedMotion ? 0.18 : 0.24 }}
           >
             <motion.div
               className="curtain-panel curtain-panel-left"
               initial={{ x: 0 }}
-              animate={{ x: prefersReducedMotion ? '-105%' : '-102%' }}
+              animate={{ x: prefersReducedMotion ? '-12%' : '-102%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.01 : 1.38,
-                delay: prefersReducedMotion ? 0 : 0.18,
+                duration: prefersReducedMotion ? 0.35 : 1.55,
+                delay: prefersReducedMotion ? 0.45 : 0.5,
                 ease: [0.65, 0, 0.2, 1],
               }}
             />
             <motion.div
               className="curtain-panel curtain-panel-right"
               initial={{ x: 0 }}
-              animate={{ x: prefersReducedMotion ? '105%' : '102%' }}
+              animate={{ x: prefersReducedMotion ? '12%' : '102%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.01 : 1.38,
-                delay: prefersReducedMotion ? 0 : 0.18,
+                duration: prefersReducedMotion ? 0.35 : 1.55,
+                delay: prefersReducedMotion ? 0.45 : 0.5,
                 ease: [0.65, 0, 0.2, 1],
               }}
             />
@@ -473,8 +473,8 @@ export default function App() {
               initial={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
               animate={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.82, x: '-50%', y: '-50%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.01 : 0.48,
-                delay: prefersReducedMotion ? 0 : 0.32,
+                duration: prefersReducedMotion ? 0.25 : 0.55,
+                delay: prefersReducedMotion ? 0.48 : 0.62,
                 ease: [0.4, 0, 1, 1],
               }}
             >
