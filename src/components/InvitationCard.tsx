@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { toPng } from 'html-to-image';
 import {
   CalendarPlus,
@@ -37,6 +37,7 @@ const saveBlob = (content: string, type: string, filename: string) => {
 };
 
 export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCardProps) {
+  const prefersReducedMotion = useReducedMotion();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -92,9 +93,9 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         ref={cardRef}
         id="printable-invitation"
         className="formal-invitation"
-        initial={{ opacity: 0, scale: 0.97 }}
+        initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.97 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: prefersReducedMotion ? 0.01 : 0.68, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="card-ornament card-ornament-top" aria-hidden="true" />
         <div className="card-ornament card-ornament-bottom" aria-hidden="true" />

@@ -161,7 +161,7 @@ export default function App() {
     if (!showCurtain) return;
     const timer = window.setTimeout(
       () => setShowCurtain(false),
-      prefersReducedMotion ? 1050 : 2250
+      prefersReducedMotion ? 120 : 4200
     );
     return () => window.clearTimeout(timer);
   }, [prefersReducedMotion, showCurtain]);
@@ -446,36 +446,36 @@ export default function App() {
             aria-hidden="true"
             initial={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: prefersReducedMotion ? 0.18 : 0.24 }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.4, 0, 1, 1] }}
           >
             <motion.div
               className="curtain-panel curtain-panel-left"
               initial={{ x: 0 }}
-              animate={{ x: prefersReducedMotion ? '-12%' : '-102%' }}
+              animate={{ x: '-104%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.35 : 1.55,
-                delay: prefersReducedMotion ? 0.45 : 0.5,
-                ease: [0.65, 0, 0.2, 1],
+                duration: prefersReducedMotion ? 0.01 : 3,
+                delay: prefersReducedMotion ? 0 : 0.75,
+                ease: [0.76, 0, 0.24, 1],
               }}
             />
             <motion.div
               className="curtain-panel curtain-panel-right"
               initial={{ x: 0 }}
-              animate={{ x: prefersReducedMotion ? '12%' : '102%' }}
+              animate={{ x: '104%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.35 : 1.55,
-                delay: prefersReducedMotion ? 0.45 : 0.5,
-                ease: [0.65, 0, 0.2, 1],
+                duration: prefersReducedMotion ? 0.01 : 3,
+                delay: prefersReducedMotion ? 0 : 0.75,
+                ease: [0.76, 0, 0.24, 1],
               }}
             />
             <motion.div
               className="curtain-seal"
               initial={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
-              animate={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.82, x: '-50%', y: '-50%' }}
+              animate={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.86, x: '-50%', y: '-50%' }}
               transition={{
-                duration: prefersReducedMotion ? 0.25 : 0.55,
-                delay: prefersReducedMotion ? 0.48 : 0.62,
-                ease: [0.4, 0, 1, 1],
+                duration: prefersReducedMotion ? 0.01 : 1.15,
+                delay: prefersReducedMotion ? 0 : 0.72,
+                ease: [0.4, 0, 0.2, 1],
               }}
             >
               <img src={EVENT.logoPath} alt="" width="96" height="96" />
@@ -535,8 +535,12 @@ export default function App() {
               className="welcome-grid"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 18 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: prefersReducedMotion ? 0 : -12 }}
-              transition={{ duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+              exit={{
+                opacity: 0,
+                y: prefersReducedMotion ? 0 : -10,
+                transition: { duration: prefersReducedMotion ? 0.01 : 0.24, ease: [0.4, 0, 1, 1] },
+              }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.62, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="hero-copy">
                 <span className="eyebrow"><Sparkles aria-hidden="true" /> गणेशोत्सव • २०२६</span>
@@ -582,8 +586,12 @@ export default function App() {
               className="personalize-layout"
               initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.985 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, y: prefersReducedMotion ? 0 : -12 }}
-              transition={{ duration: prefersReducedMotion ? 0.01 : 0.4, ease: [0.16, 1, 0.3, 1] }}
+              exit={{
+                opacity: 0,
+                y: prefersReducedMotion ? 0 : -10,
+                transition: { duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.4, 0, 1, 1] },
+              }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.58, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="personalize-card devotional-frame">
                 <span className="eyebrow"><ShieldCheck aria-hidden="true" /> आपले आमंत्रण वैयक्तिक करा</span>
@@ -666,8 +674,11 @@ export default function App() {
               className="invitation-layout"
               initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.16, 1, 0.3, 1] }}
+              exit={{
+                opacity: 0,
+                transition: { duration: prefersReducedMotion ? 0.01 : 0.22, ease: [0.4, 0, 1, 1] },
+              }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.62, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="invitation-toolbar">
                 <div className="narration-status" aria-live="polite">
