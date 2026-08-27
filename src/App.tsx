@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight,
   CalendarDays,
@@ -123,6 +123,7 @@ function EventFact({ icon: Icon, label, value }: { icon: typeof CalendarDays; la
 }
 
 export default function App() {
+  const prefersReducedMotion = useReducedMotion();
   const sharedGuest = useMemo(() => {
     const value = new URLSearchParams(window.location.search).get('guest');
     return value ? formatGuestName(value) : '';
@@ -139,6 +140,7 @@ export default function App() {
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState('');
   const [rsvp, setRsvp] = useState<RsvpStatus>('pending');
+  const [showCurtain, setShowCurtain] = useState(!sharedGuest);
   const [supportsVoiceName] = useState(
     () => Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
   );
@@ -154,6 +156,15 @@ export default function App() {
       cancelNaturalSpeech();
     };
   }, []);
+
+  useEffect(() => {
+    if (!showCurtain) return;
+    const timer = window.setTimeout(
+      () => setShowCurtain(false),
+      prefersReducedMotion ? 80 : 1700
+    );
+    return () => window.clearTimeout(timer);
+  }, [prefersReducedMotion, showCurtain]);
 
   useEffect(() => {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
@@ -403,6 +414,7 @@ export default function App() {
     setIsSpeaking(false);
     setSpeechError('');
     setRsvp('pending');
+    setShowCurtain(true);
   };
 
   const updateRsvp = (status: RsvpStatus) => {
@@ -426,6 +438,52 @@ export default function App() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content">थेट आमंत्रणाकडे जा</a>
+
+      <AnimatePresence>
+        {showCurtain && step === 'welcome' && (
+          <motion.div
+            className="curtain-reveal"
+            aria-hidden="true"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0.01 : 0.22 }}
+          >
+            <motion.div
+              className="curtain-panel curtain-panel-left"
+              initial={{ x: 0 }}
+              animate={{ x: prefersReducedMotion ? '-105%' : '-102%' }}
+              transition={{
+                duration: prefersReducedMotion ? 0.01 : 1.38,
+                delay: prefersReducedMotion ? 0 : 0.18,
+                ease: [0.65, 0, 0.2, 1],
+              }}
+            />
+            <motion.div
+              className="curtain-panel curtain-panel-right"
+              initial={{ x: 0 }}
+              animate={{ x: prefersReducedMotion ? '105%' : '102%' }}
+              transition={{
+                duration: prefersReducedMotion ? 0.01 : 1.38,
+                delay: prefersReducedMotion ? 0 : 0.18,
+                ease: [0.65, 0, 0.2, 1],
+              }}
+            />
+            <motion.div
+              className="curtain-seal"
+              initial={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+              animate={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.82, x: '-50%', y: '-50%' }}
+              transition={{
+                duration: prefersReducedMotion ? 0.01 : 0.48,
+                delay: prefersReducedMotion ? 0 : 0.32,
+                ease: [0.4, 0, 1, 1],
+              }}
+            >
+              <img src={EVENT.logoPath} alt="" width="96" height="96" />
+              <span>श्री गणेशाय नमः</span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="ambient-glow ambient-glow-one" aria-hidden="true" />
       <div className="ambient-glow ambient-glow-two" aria-hidden="true" />
@@ -475,10 +533,10 @@ export default function App() {
             <motion.section
               key="welcome"
               className="welcome-grid"
-              initial={{ opacity: 0, y: 18 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 18 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+              exit={{ opacity: 0, y: prefersReducedMotion ? 0 : -12 }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="hero-copy">
                 <span className="eyebrow"><Sparkles aria-hidden="true" /> गणेशोत्सव • २०२६</span>
@@ -522,10 +580,10 @@ export default function App() {
             <motion.section
               key="personalize"
               className="personalize-layout"
-              initial={{ opacity: 0, scale: 0.985 }}
+              initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 0.985 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.4 }}
+              exit={{ opacity: 0, y: prefersReducedMotion ? 0 : -12 }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.4, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="personalize-card devotional-frame">
                 <span className="eyebrow"><ShieldCheck aria-hidden="true" /> आपले आमंत्रण वैयक्तिक करा</span>
@@ -606,10 +664,10 @@ export default function App() {
             <motion.section
               key="invitation"
               className="invitation-layout"
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: prefersReducedMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.45 }}
+              transition={{ duration: prefersReducedMotion ? 0.01 : 0.45, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="invitation-toolbar">
                 <div className="narration-status" aria-live="polite">
