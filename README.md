@@ -18,6 +18,7 @@
 - गोड Aarohi Neural मराठी निवेदन आणि browser voice fallback
 - उपस्थितीचा प्रतिसाद
 - कॅलेंडर, मार्गदर्शन, फोन आणि WhatsApp कृती
+- जाहिरातीसाठी scan-tested social, A4 print आणि स्वतंत्र high-resolution QR files
 - शेअर करता येणारी वैयक्तिक लिंक आणि PNG डाउनलोड
 - responsive आणि reduced-motion सुलभ रचना
 
