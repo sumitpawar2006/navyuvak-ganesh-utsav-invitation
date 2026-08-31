@@ -1085,7 +1085,7 @@ a {
 }
 
 .permission-retry-button {
-  min-height: 2.75rem;
+  min-height: 3rem;
   padding: 0.6rem 0.8rem;
   color: #fff2d0;
   border-color: rgba(255, 183, 66, 0.52);
@@ -1102,7 +1102,7 @@ a {
 }
 
 .open-chrome-button {
-  min-height: 2.75rem;
+  min-height: 3rem;
   padding: 0.6rem 0.8rem;
   color: #251006;
   border-color: rgba(255, 235, 178, 0.62);
