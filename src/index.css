@@ -1029,6 +1029,12 @@ a {
   background: rgba(181, 43, 15, 0.72);
 }
 
+.voice-button.permission-needed {
+  color: #fff3cf;
+  border-color: rgba(255, 183, 66, 0.7);
+  background: rgba(177, 77, 10, 0.72);
+}
+
 .voice-button:disabled {
   opacity: 0.55;
   background: rgba(80, 57, 50, 0.55);
@@ -1054,6 +1060,35 @@ a {
 
 .field-error {
   color: #ff9d90;
+}
+
+.permission-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.8rem;
+  border: 1px solid rgba(255, 157, 144, 0.35);
+  border-radius: 0.8rem;
+  background: rgba(125, 28, 17, 0.2);
+  line-height: 1.55;
+}
+
+.permission-retry-button {
+  min-height: 2.75rem;
+  padding: 0.6rem 0.8rem;
+  color: #fff2d0;
+  border-color: rgba(255, 183, 66, 0.52);
+  background: rgba(177, 77, 10, 0.62);
+  font-size: 0.72rem;
+}
+
+.permission-retry-button:hover {
+  background: rgba(196, 85, 10, 0.82);
+}
+
+.permission-retry-button svg {
+  width: 1rem;
 }
 
 .name-form > .primary-button,
