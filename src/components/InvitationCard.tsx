@@ -46,6 +46,10 @@ const copyText = async (value: string) => {
     }
   }
 
+  if (!copyTextImmediately(value)) throw new Error('Clipboard unavailable');
+};
+
+const copyTextImmediately = (value: string) => {
   const textarea = document.createElement('textarea');
   textarea.value = value;
   textarea.setAttribute('readonly', '');
@@ -55,7 +59,7 @@ const copyText = async (value: string) => {
   textarea.select();
   const copied = document.execCommand('copy');
   textarea.remove();
-  if (!copied) throw new Error('Clipboard unavailable');
+  return copied;
 };
 
 export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCardProps) {
@@ -78,6 +82,16 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
   };
 
   const shareInvitation = async () => {
+    const invitationText = `${shareText}\n${shareUrl}`;
+    const copiedImmediately = copyTextImmediately(invitationText);
+    if (copiedImmediately) {
+      setCopied(true);
+      setActionMessage('आमंत्रणाची लिंक कॉपी झाली. शेअर करण्याचे पर्याय उघडत आहेत…');
+      window.setTimeout(() => setCopied(false), 2200);
+    } else {
+      setActionMessage('शेअर करण्याचे पर्याय उघडत आहेत…');
+    }
+
     if (navigator.share) {
       try {
         await navigator.share({ title: `${EVENT.title} आमंत्रण`, text: shareText, url: shareUrl });
@@ -85,14 +99,19 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
         return;
       } catch (error) {
         if ((error as DOMException)?.name === 'AbortError') {
-          setActionMessage('शेअर करणे रद्द केले.');
+          setActionMessage(copiedImmediately ? 'शेअर करणे रद्द केले; आमंत्रणाची लिंक कॉपी केलेली आहे.' : 'शेअर करणे रद्द केले.');
           return;
         }
       }
     }
 
+    if (copiedImmediately) {
+      setActionMessage('आमंत्रणाची लिंक कॉपी झाली. आता ती कुठेही शेअर करा.');
+      return;
+    }
+
     try {
-      await copyText(`${shareText}\n${shareUrl}`);
+      await copyText(invitationText);
       setCopied(true);
       setActionMessage('आमंत्रणाची लिंक कॉपी झाली. आता ती कुठेही शेअर करा.');
       window.setTimeout(() => setCopied(false), 2200);
@@ -246,14 +265,14 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
             <button type="button" onClick={addToCalendar}>
               <CalendarPlus aria-hidden="true" /> कॅलेंडरमध्ये जोडा
             </button>
-            <a href={EVENT.mapUrl} target="_blank" rel="noreferrer" onClick={() => setActionMessage('Google Maps मध्ये अचूक स्थळ उघडत आहे…')}>
+            <a href={EVENT.mapUrl} onClick={() => setActionMessage('Google Maps मध्ये अचूक स्थळ उघडत आहे…')}>
               <Navigation aria-hidden="true" /> मार्गदर्शन मिळवा
             </a>
             <button type="button" onClick={shareInvitation}>
               {copied ? <Copy aria-hidden="true" /> : <Share2 aria-hidden="true" />}
               {copied ? 'लिंक कॉपी झाली' : 'आमंत्रण शेअर करा'}
             </button>
-            <a href={whatsAppUrl} target="_blank" rel="noreferrer" onClick={() => setActionMessage('WhatsApp मध्ये तयार संदेश उघडत आहे…')}>
+            <a href={whatsAppUrl} onClick={() => setActionMessage('WhatsApp मध्ये तयार संदेश उघडत आहे…')}>
               <MessageCircle aria-hidden="true" /> WhatsApp वर शेअर करा
             </a>
             <button type="button" onClick={downloadInvitation} disabled={isDownloading}>

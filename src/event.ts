@@ -14,7 +14,7 @@ export const EVENT = {
   phoneDisplay: '८८८८६६५५३६',
   phone: '+918888665536',
   logoPath: '/assets/navyuvak-mandal-2026.jpeg',
-  mapUrl: 'https://maps.app.goo.gl/4am1aSXTj88muaBX8',
+  mapUrl: 'https://www.google.com/maps/search/?api=1&query=21.103106%2C78.988185',
 } as const;
 
 const escapeCalendarText = (value: string) =>
