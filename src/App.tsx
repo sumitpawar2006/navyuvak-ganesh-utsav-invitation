@@ -695,7 +695,8 @@ export default function App() {
                         cancelNaturalSpeech();
                         return;
                       }
-                      speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation);
+                      setIsMuted(false);
+                      speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation, true);
                     }}
                     aria-pressed={isSpeaking}
                   >
