@@ -432,6 +432,8 @@ a {
 .primary-button,
 .secondary-button,
 .voice-button,
+.permission-retry-button,
+.open-chrome-button,
 .compact-button,
 .rsvp-button,
 .action-list button,
@@ -470,6 +472,8 @@ a {
 .primary-button:active:not(:disabled),
 .secondary-button:active:not(:disabled),
 .voice-button:active:not(:disabled),
+.permission-retry-button:active:not(:disabled),
+.open-chrome-button:active,
 .compact-button:active:not(:disabled),
 .rsvp-button:active:not(:disabled),
 .action-list button:active:not(:disabled),
@@ -484,6 +488,8 @@ a {
   .primary-button:hover,
   .secondary-button:hover,
   .voice-button:hover:not(:disabled),
+  .permission-retry-button:hover,
+  .open-chrome-button:hover,
   .compact-button:hover:not(:disabled),
   .rsvp-button:hover:not(:disabled),
   .icon-button:hover,
@@ -1055,6 +1061,10 @@ a {
 }
 
 .voice-support-note {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.65rem;
   color: #d7bd94;
 }
 
@@ -1088,6 +1098,25 @@ a {
 }
 
 .permission-retry-button svg {
+  width: 1rem;
+}
+
+.open-chrome-button {
+  min-height: 2.75rem;
+  padding: 0.6rem 0.8rem;
+  color: #251006;
+  border-color: rgba(255, 235, 178, 0.62);
+  background: linear-gradient(135deg, #ffd36c, #ee8e17);
+  font-size: 0.72rem;
+  text-decoration: none;
+}
+
+.open-chrome-button:hover {
+  color: #160702;
+  background: linear-gradient(135deg, #ffe39a, #ffad27);
+}
+
+.open-chrome-button svg {
   width: 1rem;
 }
 

@@ -4,6 +4,7 @@ import {
   ArrowRight,
   CalendarDays,
   Clock3,
+  ExternalLink,
   Headphones,
   Heart,
   MapPin,
@@ -129,6 +130,11 @@ export default function App() {
     const value = new URLSearchParams(window.location.search).get('guest');
     return value ? formatGuestName(value) : '';
   }, []);
+  const isAndroidDevice = useMemo(() => /Android/i.test(window.navigator.userAgent), []);
+  const androidChromeUrl = useMemo(() => {
+    const currentUrl = new URL(window.location.href);
+    return `intent://${currentUrl.host}${currentUrl.pathname}${currentUrl.search}#Intent;scheme=${currentUrl.protocol.slice(0, -1)};package=com.android.chrome;end`;
+  }, []);
 
   const [step, setStep] = useState<AppStep>(sharedGuest ? 'invitation' : 'welcome');
   const [typedName, setTypedName] = useState(sharedGuest);
@@ -234,7 +240,14 @@ export default function App() {
     setSubtitle('मायक्रोफोन वापरण्यासाठी परवानगी मागत आहे…');
 
     try {
-      const stream = await window.navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await window.navigator.mediaDevices.getUserMedia({
+        audio: {
+          autoGainControl: true,
+          channelCount: 1,
+          echoCancellation: true,
+          noiseSuppression: true,
+        },
+      });
       stream.getTracks().forEach((track) => track.stop());
       microphonePermissionRef.current = 'granted';
       setMicrophonePermission('granted');
@@ -258,14 +271,23 @@ export default function App() {
     }
   };
 
+  const playWelcomeAndPrepareListening = (forceSound = false) => {
+    const permissionRequest = requestMicrophoneAccess();
+    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, forceSound);
+    const preparationSessionId = recognitionSessionRef.current;
+
+    void permissionRequest.then((hasPermission) => {
+      if (!hasPermission || recognitionSessionRef.current !== preparationSessionId) return;
+      setSubtitle('मायक्रोफोन तयार आहे. आता आपले नाव स्पष्ट बोला…');
+      window.setTimeout(() => {
+        if (recognitionSessionRef.current === preparationSessionId) void startListening(true);
+      }, 520);
+    });
+  };
+
   const openInvitation = () => {
     setStep('personalize');
-    const permissionRequest = requestMicrophoneAccess();
-    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, false, () => {
-      void permissionRequest.then((hasPermission) => {
-        if (hasPermission) void startListening(true);
-      });
-    });
+    playWelcomeAndPrepareListening();
   };
 
   const startListening = async (permissionAlreadyGranted = false) => {
@@ -287,13 +309,17 @@ export default function App() {
       if (!hasPermission || recognitionSessionRef.current !== sessionId) return;
     }
 
+    setSubtitle('मायक्रोफोन सक्रिय करत आहे…');
+    await new Promise((resolve) => window.setTimeout(resolve, 420));
+    if (recognitionSessionRef.current !== sessionId) return;
+
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     const deviceLanguages = (window.navigator.languages?.length
       ? window.navigator.languages
       : [window.navigator.language]
     ).filter(Boolean);
-    const deviceModes = deviceLanguages.map((language) => ({ language, label: 'फोनच्या भाषेत' }));
-    const recognitionModes = [INDIAN_NAME_LANGUAGES[0], ...deviceModes, ...INDIAN_NAME_LANGUAGES.slice(1)].filter(
+    const deviceModes = deviceLanguages.slice(0, 1).map((language) => ({ language, label: 'फोनच्या भाषेत' }));
+    const recognitionModes = [INDIAN_NAME_LANGUAGES[0], ...deviceModes, INDIAN_NAME_LANGUAGES[1], INDIAN_NAME_LANGUAGES[2]].filter(
       (mode, index, modes) => modes.findIndex(
         (candidate) => candidate.language.toLowerCase() === mode.language.toLowerCase()
       ) === index
@@ -304,6 +330,17 @@ export default function App() {
     let retryAfterEnd = false;
     let finalError = '';
     let invitationOpened = false;
+    let recognitionStarted = false;
+    let soundDetected = false;
+    let speechDetected = false;
+    let noSpeechRetries = 0;
+    let startWatchdog: number | null = null;
+
+    const clearStartWatchdog = () => {
+      if (startWatchdog === null) return;
+      window.clearTimeout(startWatchdog);
+      startWatchdog = null;
+    };
 
     const openDetectedInvitation = (name: string) => {
       if (invitationOpened || recognitionSessionRef.current !== sessionId) return;
@@ -322,6 +359,9 @@ export default function App() {
       const currentMode = recognitionModes[modeIndex];
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
+      recognitionStarted = false;
+      soundDetected = false;
+      speechDetected = false;
       recognition.lang = currentMode.language;
       recognition.interimResults = true;
       recognition.continuous = false;
@@ -330,9 +370,23 @@ export default function App() {
 
       recognition.onstart = () => {
         if (recognitionSessionRef.current !== sessionId) return;
+        recognitionStarted = true;
+        clearStartWatchdog();
         setIsListening(true);
         setSpeechError('');
         setSubtitle(`मायक्रोफोन सुरू आहे. आता आपले नाव ${currentMode.label} स्पष्ट बोला…`);
+      };
+
+      recognition.onsoundstart = () => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        soundDetected = true;
+        setSubtitle('आवाज मिळत आहे. आपले पूर्ण नाव बोला…');
+      };
+
+      recognition.onspeechstart = () => {
+        if (recognitionSessionRef.current !== sessionId) return;
+        speechDetected = true;
+        setSubtitle('आपले नाव ऐकत आहे…');
       };
 
       recognition.onresult = (event: any) => {
@@ -357,30 +411,38 @@ export default function App() {
 
       recognition.onerror = (event: any) => {
         if (recognitionSessionRef.current !== sessionId) return;
+        clearStartWatchdog();
         setIsListening(false);
         const errorCode = String(event.error ?? 'unknown');
         const canTryAnotherLanguage = ['language-not-supported', 'language-unavailable'].includes(errorCode)
           && modeIndex < recognitionModes.length - 1;
-        const canRetryListening = ['network', 'no-speech'].includes(errorCode)
-          && modeIndex < Math.min(2, recognitionModes.length - 1);
-        const canRetry = canTryAnotherLanguage || canRetryListening;
+        const canRetrySilence = errorCode === 'no-speech' && noSpeechRetries < 1;
+        const canRetry = canTryAnotherLanguage || canRetrySilence;
 
         if (canRetry) {
-          modeIndex += 1;
+          if (canTryAnotherLanguage) modeIndex += 1;
+          if (canRetrySilence) noSpeechRetries += 1;
           retryAfterEnd = true;
           finalError = '';
           setSpeechError('');
-          setSubtitle(`${recognitionModes[modeIndex].label} पुन्हा नाव ऐकण्याचा प्रयत्न करत आहे…`);
+          setSubtitle(
+            canTryAnotherLanguage
+              ? `${recognitionModes[modeIndex].label} नाव ऐकण्याचा प्रयत्न करत आहे…`
+              : 'आवाज मिळाला नाही. मायक्रोफोन एकदा पुन्हा सुरू करत आहे…'
+          );
           return;
         }
 
         const messages: Record<string, string> = {
           'not-allowed': 'मायक्रोफोनची परवानगी मिळाली नाही. ब्राउझरच्या Site settings मध्ये Microphone → Allow करा आणि पुन्हा प्रयत्न करा.',
           'service-not-allowed': 'या ब्राउझरने आवाज ओळख सेवा रोखली आहे. Chrome मध्ये दुवा उघडा किंवा नाव टाइप करा.',
-          'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. दुसरे अॅप बंद करून पुन्हा प्रयत्न करा किंवा नाव टाइप करा.',
-          network: 'मोबाइलवरील आवाज ओळख सेवेशी संपर्क झाला नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.',
-          'no-speech': 'नाव ऐकू आले नाही. माइकजवळ स्पष्ट बोला किंवा नाव टाइप करा.',
+          'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. Quick Settings मधील Mic access सुरू करा, दुसरे रेकॉर्डिंग अॅप बंद करा आणि पुन्हा प्रयत्न करा.',
+          network: 'आवाज ओळखण्यासाठी इंटरनेट आवश्यक आहे. मोबाइल डेटा किंवा Wi-Fi तपासा आणि पुन्हा “नाव बोला” दाबा.',
+          'no-speech': soundDetected
+            ? 'आवाज मिळाला, पण नाव स्पष्ट ओळखता आले नाही. फोनजवळ पूर्ण नाव बोला आणि पुन्हा प्रयत्न करा.'
+            : 'मायक्रोफोनची परवानगी आहे, पण आवाज मिळाला नाही. फोनच्या Quick Settings मधील Mic access सुरू करा आणि पुन्हा प्रयत्न करा.',
           'language-not-supported': 'या फोनवर मराठी, हिंदी किंवा भारतीय इंग्रजी आवाज ओळख उपलब्ध नाही. कृपया नाव टाइप करा.',
+          aborted: finalError || 'आवाज ऐकणे थांबले. पुन्हा “नाव बोला” दाबा.',
         };
         if (['not-allowed', 'service-not-allowed'].includes(errorCode)) {
           microphonePermissionRef.current = 'denied';
@@ -393,6 +455,7 @@ export default function App() {
 
       recognition.onnomatch = () => {
         if (recognitionSessionRef.current !== sessionId) return;
+        clearStartWatchdog();
         finalError = 'नाव ओळखता आले नाही. कृपया पुन्हा स्पष्ट बोला किंवा नाव टाइप करा.';
         setSpeechError(finalError);
         setIsListening(false);
@@ -401,6 +464,7 @@ export default function App() {
 
       recognition.onend = () => {
         if (recognitionSessionRef.current !== sessionId) return;
+        clearStartWatchdog();
         setIsListening(false);
 
         const detectedName = recognizedName || latestName;
@@ -411,20 +475,37 @@ export default function App() {
 
         if (retryAfterEnd) {
           retryAfterEnd = false;
-          window.setTimeout(startRecognitionAttempt, 300);
+          window.setTimeout(startRecognitionAttempt, 520);
           return;
         }
 
         if (!finalError) {
-          finalError = 'नाव ऐकू आले नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.';
+          finalError = speechDetected
+            ? 'आपला आवाज मिळाला, पण नाव पूर्ण ओळखता आले नाही. पुन्हा स्पष्ट बोला किंवा नाव टाइप करा.'
+            : soundDetected
+              ? 'आवाज मिळाला, पण बोललेले नाव ओळखता आले नाही. पुन्हा “नाव बोला” दाबा.'
+              : 'मायक्रोफोन सुरू झाला, पण आवाज मिळाला नाही. फोनच्या Quick Settings मधील Mic access सुरू असल्याची खात्री करा.';
           setSpeechError(finalError);
           setSubtitle('नाव मिळाले नाही. कृपया पुन्हा प्रयत्न करा.');
         }
       };
 
       try {
+        startWatchdog = window.setTimeout(() => {
+          if (recognitionSessionRef.current !== sessionId || recognitionStarted) return;
+          finalError = 'मायक्रोफोनची परवानगी आहे, पण फोनची आवाज ओळख सेवा सुरू झाली नाही. Chrome मध्ये दुवा उघडा, इंटरनेट तपासा आणि पुन्हा प्रयत्न करा.';
+          setIsListening(false);
+          setSpeechError(finalError);
+          setSubtitle('आवाज ओळख सेवा सुरू झाली नाही. पुन्हा प्रयत्न करा.');
+          try {
+            recognition.abort();
+          } catch {
+            // The recognition service may already have stopped.
+          }
+        }, 5_500);
         recognition.start();
       } catch {
+        clearStartWatchdog();
         setIsListening(false);
         finalError = 'मायक्रोफोन सुरू करता आला नाही. पुन्हा “नाव बोला” दाबा किंवा नाव टाइप करा.';
         setSpeechError(finalError);
@@ -567,12 +648,7 @@ export default function App() {
             if (isMuted) {
               setIsMuted(false);
               if (step === 'personalize') {
-                const permissionRequest = requestMicrophoneAccess();
-                speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true, () => {
-                  void permissionRequest.then((hasPermission) => {
-                    if (hasPermission) void startListening(true);
-                  });
-                });
+                playWelcomeAndPrepareListening(true);
               } else if (step === 'invitation') {
                 speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation, true);
               } else {
@@ -664,7 +740,7 @@ export default function App() {
               <div className="personalize-card devotional-frame">
                 <span className="eyebrow"><ShieldCheck aria-hidden="true" /> आपले आमंत्रण वैयक्तिक करा</span>
                 <h1>आपल्याला कोणत्या नावाने संबोधावे?</h1>
-                <p>निवेदन पूर्ण होताच मायक्रोफोन आपोआप सुरू होईल. आपले नाव स्पष्ट बोला; नाव मिळताच आमंत्रण तयार होईल.</p>
+                <p>मायक्रोफोनची परवानगी मिळताच नाव ऐकणे आपोआप सुरू होईल. आपले पूर्ण नाव स्पष्ट बोला; नाव मिळताच आमंत्रण तयार होईल.</p>
 
                 <Avatar
                   expression={isListening ? 'listening' : isSpeaking ? 'talking' : 'idle'}
@@ -680,12 +756,7 @@ export default function App() {
                     type="button"
                     onClick={() => {
                       setIsMuted(false);
-                      const permissionRequest = requestMicrophoneAccess();
-                      speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, true, () => {
-                        void permissionRequest.then((hasPermission) => {
-                          if (hasPermission) void startListening(true);
-                        });
-                      });
+                      playWelcomeAndPrepareListening(true);
                     }}
                   >
                     <Volume2 aria-hidden="true" /> पुन्हा ऐका
@@ -719,7 +790,7 @@ export default function App() {
                       aria-describedby={
                         !supportsVoiceName
                           ? 'voice-support-help'
-                          : microphonePermission === 'denied' && speechError
+                          : speechError
                             ? 'name-error'
                             : undefined
                       }
@@ -738,21 +809,32 @@ export default function App() {
                   </div>
                   <p id="name-help" className="field-help">आपले नाव फक्त हे आमंत्रण वैयक्तिक करण्यासाठी वापरले जाते.</p>
                   {!supportsVoiceName && (
-                    <p id="voice-support-help" className="field-help voice-support-note">
-                      नाव बोलण्यासाठी हा दुवा Chrome किंवा Edge मध्ये उघडा; किंवा वर आपले नाव टाइप करा.
-                    </p>
+                    <div id="voice-support-help" className="field-help voice-support-note">
+                      <span>या ब्राउझरमध्ये नाव ऐकण्याची सुविधा नाही. Chrome किंवा Edge मध्ये उघडा; किंवा वर आपले नाव टाइप करा.</span>
+                      {isAndroidDevice && (
+                        <a className="open-chrome-button" href={androidChromeUrl}>
+                          <ExternalLink aria-hidden="true" /> Chrome मध्ये उघडा
+                        </a>
+                      )}
+                    </div>
                   )}
                   {speechError && (
                     <div
                       id="name-error"
-                      className={microphonePermission === 'denied' ? 'field-error permission-error' : 'field-error'}
+                      className="field-error permission-error"
                       role="alert"
                     >
                       <span>{speechError}</span>
-                      {microphonePermission === 'denied' && (
+                      {supportsVoiceName && (
                         <button className="permission-retry-button" type="button" onClick={() => void startListening()}>
-                          <Mic aria-hidden="true" /> मायक्रोफोन पुन्हा तपासा
+                          <Mic aria-hidden="true" />
+                          {microphonePermission === 'denied' ? 'मायक्रोफोन पुन्हा तपासा' : 'पुन्हा नाव बोला'}
                         </button>
+                      )}
+                      {isAndroidDevice && speechError.includes('Chrome') && (
+                        <a className="open-chrome-button" href={androidChromeUrl}>
+                          <ExternalLink aria-hidden="true" /> Chrome मध्ये उघडा
+                        </a>
                       )}
                     </div>
                   )}
