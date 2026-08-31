@@ -147,7 +147,43 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
   const whatsAppUrl = `https://wa.me/?text=${encodeURIComponent(`${shareText}\n${shareUrl}`)}`;
 
   return (
-    <div className="invitation-card-layout">
+    <div className="invitation-experience">
+      <section className="quick-rsvp-panel" aria-labelledby="quick-rsvp-title">
+        <div className="quick-rsvp-copy">
+          <span className="panel-label">आपला प्रतिसाद</span>
+          <h3 id="quick-rsvp-title">आपण उत्सवात सहभागी होणार का?</h3>
+        </div>
+
+        <div className="rsvp-buttons">
+          <button
+            type="button"
+            className={rsvp === 'attending' ? 'rsvp-button yes selected' : 'rsvp-button yes'}
+            onClick={() => onRsvp('attending')}
+            aria-pressed={rsvp === 'attending'}
+          >
+            <CheckCircle2 aria-hidden="true" /> हो, मी येणार
+          </button>
+          <button
+            type="button"
+            className={rsvp === 'not-attending' ? 'rsvp-button no selected' : 'rsvp-button no'}
+            onClick={() => onRsvp('not-attending')}
+            aria-pressed={rsvp === 'not-attending'}
+          >
+            <XCircle aria-hidden="true" /> नाही, शक्य नाही
+          </button>
+        </div>
+
+        {rsvp === 'attending' && (
+          <div className="response-message success" role="status">
+            <Check aria-hidden="true" /> आपले व आपल्या परिवाराचे स्वागत करण्यास आम्ही उत्सुक आहोत.
+          </div>
+        )}
+        {rsvp === 'not-attending' && (
+          <div className="response-message" role="status">मंडळाला कळवल्याबद्दल धन्यवाद.</div>
+        )}
+      </section>
+
+      <div className="invitation-card-layout">
       <motion.div
         ref={cardRef}
         id="printable-invitation"
@@ -225,40 +261,6 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
       </motion.div>
 
       <aside className="invitation-actions" aria-label="आमंत्रणासाठी उपलब्ध कृती">
-        <div className="action-panel">
-          <span className="panel-label">आपला प्रतिसाद</span>
-          <h3>आपण उत्सवात सहभागी होणार का?</h3>
-          <p>आपला प्रतिसाद फक्त या उपकरणावर जतन केला जातो.</p>
-
-          <div className="rsvp-buttons">
-            <button
-              type="button"
-              className={rsvp === 'attending' ? 'rsvp-button yes selected' : 'rsvp-button yes'}
-              onClick={() => onRsvp('attending')}
-              aria-pressed={rsvp === 'attending'}
-            >
-              <CheckCircle2 aria-hidden="true" /> मी येणार आहे
-            </button>
-            <button
-              type="button"
-              className={rsvp === 'not-attending' ? 'rsvp-button no selected' : 'rsvp-button no'}
-              onClick={() => onRsvp('not-attending')}
-              aria-pressed={rsvp === 'not-attending'}
-            >
-              <XCircle aria-hidden="true" /> उपस्थित राहू शकणार नाही
-            </button>
-          </div>
-
-          {rsvp === 'attending' && (
-            <div className="response-message success" role="status">
-              <Check aria-hidden="true" /> आपले व आपल्या परिवाराचे स्वागत करण्यास आम्ही उत्सुक आहोत.
-            </div>
-          )}
-          {rsvp === 'not-attending' && (
-            <div className="response-message" role="status">मंडळाला कळवल्याबद्दल धन्यवाद.</div>
-          )}
-        </div>
-
         <div className="action-panel compact">
           <span className="panel-label">जतन करा व शेअर करा</span>
           <div className="action-list">
@@ -287,6 +289,7 @@ export default function InvitationCard({ guestName, rsvp, onRsvp }: InvitationCa
           </div>
         </div>
       </aside>
+      </div>
     </div>
   );
 }
