@@ -160,7 +160,7 @@ export default function App() {
   const [subtitle, setSubtitle] = useState(
     sharedGuest ? `${sharedGuest} यांच्यासाठी वैयक्तिक आमंत्रण आले आहे.` : 'बाप्पाच्या मंगलमय उत्सवाची वाट पाहत आहोत.'
   );
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState('');
@@ -222,7 +222,7 @@ export default function App() {
     setSubtitle(text);
     if (isMuted && !forceSound) {
       setIsSpeaking(false);
-      setSubtitle('आवाज बंद आहे. वरचे स्पीकर बटण दाबून आवाज सुरू करा.');
+      setSubtitle('आमंत्रणाचा आवाज बंद आहे.');
       return;
     }
 
@@ -710,6 +710,19 @@ export default function App() {
     <div className="app-shell">
       <a className="skip-link" href="#main-content">थेट आमंत्रणाकडे जा</a>
 
+      <div className="background-video" aria-hidden="true">
+        <video
+          autoPlay={!prefersReducedMotion}
+          muted
+          loop
+          playsInline
+          preload={prefersReducedMotion ? 'metadata' : 'auto'}
+          tabIndex={-1}
+        >
+          <source src="/video/bappa-background.mp4" type="video/mp4" />
+        </video>
+      </div>
+
       <AnimatePresence>
         {showCurtain && step === 'welcome' && (
           <motion.div
@@ -790,7 +803,7 @@ export default function App() {
               cancelNaturalSpeech();
               setIsListening(false);
               setIsSpeaking(false);
-              setSubtitle('आवाज बंद आहे. पुन्हा सुरू करण्यासाठी स्पीकर बटण दाबा.');
+              setSubtitle('आमंत्रणाचा आवाज बंद आहे.');
             }
           }}
           aria-label={isMuted ? 'आमंत्रणाचा आवाज सुरू करा' : 'आमंत्रणाचा आवाज बंद करा'}
