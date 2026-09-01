@@ -710,19 +710,6 @@ export default function App() {
     <div className="app-shell">
       <a className="skip-link" href="#main-content">थेट आमंत्रणाकडे जा</a>
 
-      <div className="background-video" aria-hidden="true">
-        <video
-          autoPlay={!prefersReducedMotion}
-          muted
-          loop
-          playsInline
-          preload={prefersReducedMotion ? 'metadata' : 'auto'}
-          tabIndex={-1}
-        >
-          <source src="/video/bappa-background.mp4" type="video/mp4" />
-        </video>
-      </div>
-
       <AnimatePresence>
         {showCurtain && step === 'welcome' && (
           <motion.div
