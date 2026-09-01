@@ -160,7 +160,7 @@ export default function App() {
   const [subtitle, setSubtitle] = useState(
     sharedGuest ? `${sharedGuest} यांच्यासाठी वैयक्तिक आमंत्रण आले आहे.` : 'बाप्पाच्या मंगलमय उत्सवाची वाट पाहत आहोत.'
   );
-  const [isMuted, setIsMuted] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [speechError, setSpeechError] = useState('');
@@ -223,6 +223,7 @@ export default function App() {
     if (isMuted && !forceSound) {
       setIsSpeaking(false);
       setSubtitle('आमंत्रणाचा आवाज बंद आहे.');
+      onComplete?.();
       return;
     }
 
@@ -238,6 +239,7 @@ export default function App() {
       onError: () => {
         setIsSpeaking(false);
         setSubtitle('आवाज सुरू झाला नाही. फोनचा मीडिया आवाज वाढवा आणि “पुन्हा ऐका” दाबा.');
+        onComplete?.();
       },
     });
   };
@@ -313,15 +315,35 @@ export default function App() {
 
   const playWelcomeAndPrepareListening = (forceSound = false) => {
     const permissionRequest = requestMicrophoneAccess();
-    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, forceSound);
-    const preparationSessionId = recognitionSessionRef.current;
+    let narrationFinished = false;
+    let permissionGranted = false;
+    let listeningQueued = false;
+    let preparationSessionId = 0;
 
-    void permissionRequest.then((hasPermission) => {
-      if (!hasPermission || recognitionSessionRef.current !== preparationSessionId) return;
-      setSubtitle('मायक्रोफोन तयार आहे. आता आपले नाव स्पष्ट बोला…');
+    const beginListeningWhenReady = () => {
+      if (
+        listeningQueued
+        || !narrationFinished
+        || !permissionGranted
+        || recognitionSessionRef.current !== preparationSessionId
+      ) return;
+
+      listeningQueued = true;
+      setSubtitle('निवेदन पूर्ण झाले. आता आपले नाव स्पष्ट बोला…');
       window.setTimeout(() => {
         if (recognitionSessionRef.current === preparationSessionId) void startListening(true);
-      }, 520);
+      }, 320);
+    };
+
+    speak(WELCOME_SPEECH, 80, NARRATION_AUDIO.welcome, forceSound, () => {
+      narrationFinished = true;
+      beginListeningWhenReady();
+    });
+    preparationSessionId = recognitionSessionRef.current;
+
+    void permissionRequest.then((hasPermission) => {
+      permissionGranted = hasPermission;
+      beginListeningWhenReady();
     });
   };
 
