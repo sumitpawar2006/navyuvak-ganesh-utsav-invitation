@@ -1084,35 +1084,6 @@ a {
   line-height: 1.55;
 }
 
-.permission-guide {
-  width: 100%;
-  padding: 0.8rem;
-  border: 1px solid rgba(255, 183, 66, 0.32);
-  border-radius: 0.72rem;
-  color: #f6dfb5;
-  background: rgba(44, 12, 5, 0.54);
-}
-
-.permission-guide strong {
-  display: block;
-  color: #ffe1a0;
-  font-size: 0.74rem;
-}
-
-.permission-guide ol {
-  margin: 0.55rem 0 0;
-  padding-left: 1.25rem;
-}
-
-.permission-guide li + li {
-  margin-top: 0.35rem;
-}
-
-.system-permission-guide {
-  border-color: rgba(255, 207, 92, 0.42);
-  background: rgba(83, 47, 5, 0.34);
-}
-
 .permission-retry-button {
   min-height: 3rem;
   padding: 0.6rem 0.8rem;

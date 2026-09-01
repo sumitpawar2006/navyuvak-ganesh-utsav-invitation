@@ -40,10 +40,10 @@ const NARRATION_AUDIO = {
 const WELCOME_SPEECH = `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`;
 
 const SITE_MICROPHONE_HELP =
-  'या वेबसाइटची मायक्रोफोन परवानगी बंद आहे. Site controls → Permissions मध्ये Microphone → Allow करा. Microphone पर्याय दिसत नसेल तर Reset permissions दाबा आणि या पानावर परत या.';
+  'मायक्रोफोनची परवानगी उपलब्ध नाही.';
 
 const SYSTEM_MICROPHONE_HELP =
-  'फोनचा मुख्य Mic access किंवा Chrome ची microphone permission उपलब्ध नाही. वरून दोनदा खाली स्वाइप करून Quick Settings मधील Mic access → Available करा; नंतर येथे परवानगी पुन्हा तपासा.';
+  'या डिव्हाइसवर मायक्रोफोन सुरू झाला नाही.';
 
 const readMicrophonePermissionState = async (): Promise<PermissionState | null> => {
   if (!window.navigator.permissions?.query) return null;
@@ -265,7 +265,7 @@ export default function App() {
       setMicrophonePermission('denied');
       setMicrophoneIssue('site-blocked');
       setSpeechError(SITE_MICROPHONE_HELP);
-      setSubtitle('या वेबसाइटची मायक्रोफोन परवानगी बंद आहे. Site controls मधून ती सुरू करा.');
+      setSubtitle('मायक्रोफोन सुरू झाला नाही. आपण पुन्हा प्रयत्न करू शकता.');
       return false;
     }
 
@@ -304,8 +304,8 @@ export default function App() {
       );
       setSubtitle(
         sitePermissionDenied
-          ? 'या वेबसाइटची मायक्रोफोन परवानगी बंद आहे.'
-          : 'फोनचा Mic access उपलब्ध नाही. Quick Settings मधून तो सुरू करा.'
+          ? 'मायक्रोफोनची परवानगी उपलब्ध नाही.'
+          : 'या डिव्हाइसवर मायक्रोफोन सुरू झाला नाही.'
       );
       return false;
     }
@@ -474,13 +474,13 @@ export default function App() {
         }
 
         const messages: Record<string, string> = {
-          'not-allowed': 'मायक्रोफोनची परवानगी मिळाली, पण Chrome ची आवाज ओळख सेवा सुरू झाली नाही. Mic access Available ठेवा, इंटरनेट तपासा आणि पुन्हा प्रयत्न करा.',
+          'not-allowed': 'मायक्रोफोन सुरू झाला नाही. कृपया पुन्हा प्रयत्न करा किंवा नाव लिहा.',
           'service-not-allowed': 'या ब्राउझरने आवाज ओळख सेवा रोखली आहे. Chrome मध्ये दुवा उघडा किंवा नाव टाइप करा.',
-          'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. Quick Settings मधील Mic access सुरू करा, दुसरे रेकॉर्डिंग अॅप बंद करा आणि पुन्हा प्रयत्न करा.',
+          'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. पुन्हा प्रयत्न करा किंवा नाव लिहा.',
           network: 'आवाज ओळखण्यासाठी इंटरनेट आवश्यक आहे. मोबाइल डेटा किंवा Wi-Fi तपासा आणि पुन्हा “नाव बोला” दाबा.',
           'no-speech': soundDetected
             ? 'आवाज मिळाला, पण नाव स्पष्ट ओळखता आले नाही. फोनजवळ पूर्ण नाव बोला आणि पुन्हा प्रयत्न करा.'
-            : 'मायक्रोफोनची परवानगी आहे, पण आवाज मिळाला नाही. फोनच्या Quick Settings मधील Mic access सुरू करा आणि पुन्हा प्रयत्न करा.',
+            : 'मायक्रोफोन सुरू झाला, पण आवाज मिळाला नाही. कृपया पुन्हा प्रयत्न करा.',
           'language-not-supported': 'या फोनवर मराठी, हिंदी किंवा भारतीय इंग्रजी आवाज ओळख उपलब्ध नाही. कृपया नाव टाइप करा.',
           aborted: finalError || 'आवाज ऐकणे थांबले. पुन्हा “नाव बोला” दाबा.',
         };
@@ -526,7 +526,7 @@ export default function App() {
             ? 'आपला आवाज मिळाला, पण नाव पूर्ण ओळखता आले नाही. पुन्हा स्पष्ट बोला किंवा नाव टाइप करा.'
             : soundDetected
               ? 'आवाज मिळाला, पण बोललेले नाव ओळखता आले नाही. पुन्हा “नाव बोला” दाबा.'
-              : 'मायक्रोफोन सुरू झाला, पण आवाज मिळाला नाही. फोनच्या Quick Settings मधील Mic access सुरू असल्याची खात्री करा.';
+              : 'मायक्रोफोन सुरू झाला, पण आवाज मिळाला नाही. कृपया पुन्हा प्रयत्न करा.';
           setSpeechError(finalError);
           setSubtitle('नाव मिळाले नाही. कृपया पुन्हा प्रयत्न करा.');
         }
@@ -535,7 +535,7 @@ export default function App() {
       try {
         startWatchdog = window.setTimeout(() => {
           if (recognitionSessionRef.current !== sessionId || recognitionStarted) return;
-          finalError = 'मायक्रोफोनची परवानगी आहे, पण फोनची आवाज ओळख सेवा सुरू झाली नाही. Chrome मध्ये दुवा उघडा, इंटरनेट तपासा आणि पुन्हा प्रयत्न करा.';
+          finalError = 'फोनची आवाज ओळख सेवा सुरू झाली नाही.';
           setIsListening(false);
           setSpeechError(finalError);
           setSubtitle('आवाज ओळख सेवा सुरू झाली नाही. पुन्हा प्रयत्न करा.');
@@ -595,7 +595,7 @@ export default function App() {
         if (stepRef.current === 'personalize') {
           permissionRecoveryPendingRef.current = true;
           setSpeechError(SITE_MICROPHONE_HELP);
-          setSubtitle('या वेबसाइटसाठी मायक्रोफोन बंद आहे. Site controls मधून परवानगी सुरू करा.');
+          setSubtitle('मायक्रोफोनची परवानगी उपलब्ध नाही.');
         }
         return;
       }
@@ -930,7 +930,7 @@ export default function App() {
                         : microphonePermission === 'requesting'
                           ? 'परवानगी मागत आहे…'
                           : microphoneIssue
-                            ? 'माइक पुन्हा तपासा'
+                            ? 'नाव बोला'
                             : supportsVoiceName
                               ? 'नाव बोला'
                               : 'आवाज उपलब्ध नाही'}
@@ -954,32 +954,10 @@ export default function App() {
                       role="alert"
                     >
                       <span>{speechError}</span>
-                      {microphoneIssue === 'site-blocked' && (
-                        <div className="permission-guide">
-                          <strong>वेबसाइटची परवानगी पुन्हा सुरू करा</strong>
-                          <ol>
-                            <li>वर पत्त्याच्या डावीकडील Site controls चिन्ह दाबा.</li>
-                            <li>Permissions मध्ये Microphone दिसल्यास Allow निवडा.</li>
-                            <li>Microphone दिसत नसेल तर Reset permissions दाबा.</li>
-                            <li>या पानावर परत या—परवानगी आपोआप पुन्हा मागितली जाईल.</li>
-                          </ol>
-                        </div>
-                      )}
-                      {microphoneIssue === 'system-blocked' && (
-                        <div className="permission-guide system-permission-guide">
-                          <strong>फोनचा मुख्य Mic access सुरू करा</strong>
-                          <ol>
-                            <li>फोनच्या वरून दोनदा खाली स्वाइप करा.</li>
-                            <li>Quick Settings मधील Mic access टॅप करून Available करा.</li>
-                            <li>Chrome मध्ये परत येऊन “परवानगी पुन्हा तपासा” दाबा.</li>
-                            <li>तरीही Microphone दिसत नसेल तर Site controls → Permissions → Reset permissions दाबा.</li>
-                          </ol>
-                        </div>
-                      )}
                       {supportsVoiceName && (
                         <button className="permission-retry-button" type="button" onClick={() => void startListening()}>
                           <Mic aria-hidden="true" />
-                          {microphoneIssue ? 'परवानगी पुन्हा तपासा' : 'पुन्हा नाव बोला'}
+                          पुन्हा नाव बोला
                         </button>
                       )}
                       {isAndroidDevice && speechError.includes('Chrome') && (
