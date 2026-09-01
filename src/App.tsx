@@ -38,6 +38,9 @@ const NARRATION_AUDIO = {
 
 const WELCOME_SPEECH = `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`;
 
+const MICROPHONE_PERMISSION_HELP =
+  'या वेबसाइटसाठी मायक्रोफोन बंद आहे. वर पत्त्याच्या डावीकडील Site controls चिन्ह दाबा, Permissions → Microphone → Allow निवडा आणि या पानावर परत या.';
+
 const INDIAN_NAME_LANGUAGES = [
   { language: 'mr-IN', label: 'मराठीत' },
   { language: 'hi-IN', label: 'हिंदीत' },
@@ -155,6 +158,10 @@ export default function App() {
   const recognitionRef = useRef<any>(null);
   const recognitionSessionRef = useRef(0);
   const microphonePermissionRef = useRef<MicrophonePermission>('unknown');
+  const permissionRecoveryPendingRef = useRef(false);
+  const stepRef = useRef<AppStep>(step);
+  const startListeningActionRef = useRef<(permissionAlreadyGranted?: boolean) => Promise<void>>(async () => undefined);
+  stepRef.current = step;
 
   useEffect(() => {
     primeNaturalVoices();
@@ -249,6 +256,7 @@ export default function App() {
         },
       });
       stream.getTracks().forEach((track) => track.stop());
+      permissionRecoveryPendingRef.current = false;
       microphonePermissionRef.current = 'granted';
       setMicrophonePermission('granted');
       setSpeechError('');
@@ -259,11 +267,12 @@ export default function App() {
         : '';
       const permissionDenied = ['NotAllowedError', 'PermissionDeniedError', 'SecurityError'].includes(errorName);
       const nextPermission = permissionDenied ? 'denied' : 'unavailable';
+      permissionRecoveryPendingRef.current = permissionDenied;
       microphonePermissionRef.current = nextPermission;
       setMicrophonePermission(nextPermission);
       setSpeechError(
         permissionDenied
-          ? 'मायक्रोफोनची परवानगी मिळाली नाही. ब्राउझरच्या Site settings मध्ये Microphone → Allow करा आणि “मायक्रोफोन पुन्हा तपासा” दाबा.'
+          ? MICROPHONE_PERMISSION_HELP
           : 'फोनचा मायक्रोफोन उपलब्ध नाही. दुसरे अॅप बंद करून पुन्हा प्रयत्न करा किंवा नाव टाइप करा.'
       );
       setSubtitle(permissionDenied ? 'मायक्रोफोन बंद आहे. परवानगी दिल्यानंतर पुन्हा प्रयत्न करा.' : 'मायक्रोफोन उपलब्ध नाही.');
@@ -434,7 +443,7 @@ export default function App() {
         }
 
         const messages: Record<string, string> = {
-          'not-allowed': 'मायक्रोफोनची परवानगी मिळाली नाही. ब्राउझरच्या Site settings मध्ये Microphone → Allow करा आणि पुन्हा प्रयत्न करा.',
+          'not-allowed': MICROPHONE_PERMISSION_HELP,
           'service-not-allowed': 'या ब्राउझरने आवाज ओळख सेवा रोखली आहे. Chrome मध्ये दुवा उघडा किंवा नाव टाइप करा.',
           'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. Quick Settings मधील Mic access सुरू करा, दुसरे रेकॉर्डिंग अॅप बंद करा आणि पुन्हा प्रयत्न करा.',
           network: 'आवाज ओळखण्यासाठी इंटरनेट आवश्यक आहे. मोबाइल डेटा किंवा Wi-Fi तपासा आणि पुन्हा “नाव बोला” दाबा.',
@@ -445,6 +454,7 @@ export default function App() {
           aborted: finalError || 'आवाज ऐकणे थांबले. पुन्हा “नाव बोला” दाबा.',
         };
         if (['not-allowed', 'service-not-allowed'].includes(errorCode)) {
+          permissionRecoveryPendingRef.current = true;
           microphonePermissionRef.current = 'denied';
           setMicrophonePermission('denied');
         }
@@ -516,6 +526,70 @@ export default function App() {
     setSubtitle('निवेदन पूर्ण झाले. मायक्रोफोन सुरू करत आहे…');
     startRecognitionAttempt();
   };
+
+  startListeningActionRef.current = startListening;
+
+  useEffect(() => {
+    if (!supportsVoiceName || !window.navigator.permissions?.query) return;
+
+    let isActive = true;
+    let permissionStatus: PermissionStatus | null = null;
+    let resumeTimer: number | null = null;
+
+    const syncPermissionState = () => {
+      if (!isActive || !permissionStatus) return;
+
+      if (permissionStatus.state === 'granted') {
+        const shouldResume = permissionRecoveryPendingRef.current && stepRef.current === 'personalize';
+        permissionRecoveryPendingRef.current = false;
+        microphonePermissionRef.current = 'granted';
+        setMicrophonePermission('granted');
+        setSpeechError('');
+
+        if (shouldResume) {
+          setSubtitle('मायक्रोफोनची परवानगी मिळाली. आता आपले नाव स्पष्ट बोला…');
+          resumeTimer = window.setTimeout(() => {
+            if (stepRef.current === 'personalize') void startListeningActionRef.current(true);
+          }, 360);
+        }
+        return;
+      }
+
+      if (permissionStatus.state === 'denied') {
+        microphonePermissionRef.current = 'denied';
+        setMicrophonePermission('denied');
+        if (stepRef.current === 'personalize') {
+          permissionRecoveryPendingRef.current = true;
+          setSpeechError(MICROPHONE_PERMISSION_HELP);
+          setSubtitle('या वेबसाइटसाठी मायक्रोफोन बंद आहे. Site controls मधून परवानगी सुरू करा.');
+        }
+      }
+    };
+
+    void window.navigator.permissions
+      .query({ name: 'microphone' } as PermissionDescriptor)
+      .then((status) => {
+        if (!isActive) return;
+        permissionStatus = status;
+        syncPermissionState();
+        permissionStatus.addEventListener('change', syncPermissionState);
+      })
+      .catch(() => {
+        // Some Android browsers expose getUserMedia without the Permissions API.
+      });
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') syncPermissionState();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isActive = false;
+      if (resumeTimer !== null) window.clearTimeout(resumeTimer);
+      permissionStatus?.removeEventListener('change', syncPermissionState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [supportsVoiceName]);
 
   const revealInvitation = (name: string) => {
     recognitionSessionRef.current += 1;
@@ -825,10 +899,20 @@ export default function App() {
                       role="alert"
                     >
                       <span>{speechError}</span>
+                      {microphonePermission === 'denied' && (
+                        <div className="permission-guide">
+                          <strong>आता या वेबसाइटची स्वतंत्र परवानगी सुरू करा</strong>
+                          <ol>
+                            <li>वर पत्त्याच्या डावीकडील Site controls चिन्ह दाबा.</li>
+                            <li>Permissions → Microphone → Allow निवडा.</li>
+                            <li>या पानावर परत या—नाव ऐकणे आपोआप सुरू होईल.</li>
+                          </ol>
+                        </div>
+                      )}
                       {supportsVoiceName && (
                         <button className="permission-retry-button" type="button" onClick={() => void startListening()}>
                           <Mic aria-hidden="true" />
-                          {microphonePermission === 'denied' ? 'मायक्रोफोन पुन्हा तपासा' : 'पुन्हा नाव बोला'}
+                          {microphonePermission === 'denied' ? 'परवानगी पुन्हा तपासा' : 'पुन्हा नाव बोला'}
                         </button>
                       )}
                       {isAndroidDevice && speechError.includes('Chrome') && (
