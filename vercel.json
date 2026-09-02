@@ -1,8 +1,9 @@
 {
-  "rewrites": [
+  "redirects": [
     {
       "source": "/admin",
-      "destination": "/"
+      "destination": "https://vercel.com/sumits-projects-4d04664c/invitation/analytics",
+      "permanent": false
     }
   ],
   "headers": [
@@ -20,19 +21,6 @@
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
-        }
-      ]
-    },
-    {
-      "source": "/admin",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "noindex, nofollow, noarchive"
-        },
-        {
-          "key": "Cache-Control",
-          "value": "private, no-store"
         }
       ]
     }
