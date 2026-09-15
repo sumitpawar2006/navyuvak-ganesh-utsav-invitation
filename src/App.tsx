@@ -2,12 +2,9 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import {
   ArrowRight,
-  CalendarDays,
-  Clock3,
   ExternalLink,
   Headphones,
   Heart,
-  MapPin,
   Mic,
   Phone,
   Play,
@@ -20,8 +17,7 @@ import {
 } from 'lucide-react';
 import AudioWaveform from './components/AudioWaveform';
 import Avatar from './components/Avatar';
-import CelebrationOverlay from './components/CelebrationOverlay';
-import InvitationCard, { type RsvpStatus } from './components/InvitationCard';
+import InvitationCard from './components/InvitationCard';
 import { EVENT, buildInvitationSpeech } from './event';
 import { toMarathiName } from './utils/marathiName';
 import { cancelNaturalSpeech, primeNaturalVoices, speakNaturalText } from './utils/naturalVoiceEngine';
@@ -32,9 +28,6 @@ type MicrophoneIssue = 'site-blocked' | 'system-blocked' | null;
 
 const NARRATION_AUDIO = {
   welcome: '/audio/welcome-marathi.mp3',
-  invitation: '/audio/invitation-marathi.mp3',
-  attending: '/audio/attending-marathi.mp3',
-  notAttending: '/audio/not-attending-marathi.mp3',
 } as const;
 
 const WELCOME_SPEECH = `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`;
@@ -86,62 +79,6 @@ const cleanGuestName = (value: string) =>
 
 const formatGuestName = (value: string) => toMarathiName(cleanGuestName(value));
 
-const formatCount = (value: number) =>
-  value.toLocaleString('mr-IN', { minimumIntegerDigits: 2, useGrouping: false });
-
-function EventCountdown() {
-  const eventTime = useMemo(() => new Date(EVENT.dateTimeISO).getTime(), []);
-  const [now, setNow] = useState(Date.now());
-
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const remaining = Math.max(0, eventTime - now);
-  const days = Math.floor(remaining / 86_400_000);
-  const hours = Math.floor((remaining / 3_600_000) % 24);
-  const minutes = Math.floor((remaining / 60_000) % 60);
-
-  if (remaining === 0) {
-    return (
-      <div className="countdown-card" aria-label="उत्सवाचा दिवस आला आहे">
-        <Sparkles aria-hidden="true" />
-        <span>उत्सवाचा दिवस आला आहे</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="countdown-card" aria-label={`उत्सवासाठी ${days} दिवस, ${hours} तास आणि ${minutes} मिनिटे शिल्लक`}>
-      {[
-        ['दिवस', days],
-        ['तास', hours],
-        ['मिनिटे', minutes],
-      ].map(([label, value]) => (
-        <div key={label} className="countdown-unit">
-          <strong>{formatCount(value as number)}</strong>
-          <span>{label}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function EventFact({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
-  return (
-    <div className="event-fact">
-      <span className="event-fact-icon" aria-hidden="true">
-        <Icon />
-      </span>
-      <span>
-        <small>{label}</small>
-        <strong>{value}</strong>
-      </span>
-    </div>
-  );
-}
-
 export default function App() {
   const prefersReducedMotion = useReducedMotion();
   const sharedGuest = useMemo(() => {
@@ -158,7 +95,7 @@ export default function App() {
   const [typedName, setTypedName] = useState(sharedGuest);
   const [guestName, setGuestName] = useState(sharedGuest || 'प्रिय भाविक');
   const [subtitle, setSubtitle] = useState(
-    sharedGuest ? `${sharedGuest} यांच्यासाठी वैयक्तिक आमंत्रण आले आहे.` : 'बाप्पाच्या मंगलमय उत्सवाची वाट पाहत आहोत.'
+    sharedGuest ? `${sharedGuest} यांच्यासाठी स्वागत आमंत्रण आले आहे.` : 'बाप्पाच्या दर्शनासाठी आपले मनःपूर्वक स्वागत आहे.'
   );
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -166,7 +103,6 @@ export default function App() {
   const [speechError, setSpeechError] = useState('');
   const [microphonePermission, setMicrophonePermission] = useState<MicrophonePermission>('unknown');
   const [microphoneIssue, setMicrophoneIssue] = useState<MicrophoneIssue>(null);
-  const [rsvp, setRsvp] = useState<RsvpStatus>('pending');
   const [showCurtain, setShowCurtain] = useState(!sharedGuest);
   const [supportsVoiceName] = useState(
     () => Boolean((window as any).SpeechRecognition || (window as any).webkitSpeechRecognition)
@@ -673,7 +609,6 @@ export default function App() {
     const formattedName = formatGuestName(name) || 'प्रिय भाविक';
     setGuestName(formattedName);
     setTypedName(formattedName === 'प्रिय भाविक' ? '' : formattedName);
-    setRsvp('pending');
     setStep('invitation');
 
     const url = new URL(window.location.href);
@@ -681,7 +616,7 @@ export default function App() {
     else url.searchParams.set('guest', formattedName);
     window.history.replaceState({}, '', url);
 
-    speak(buildInvitationSpeech(formattedName), 80, NARRATION_AUDIO.invitation);
+    speak(buildInvitationSpeech(formattedName));
   };
 
   const submitName = (event: FormEvent) => {
@@ -701,31 +636,12 @@ export default function App() {
     setStep('welcome');
     setTypedName('');
     setGuestName('प्रिय भाविक');
-    setSubtitle('बाप्पाच्या मंगलमय उत्सवाची वाट पाहत आहोत.');
+    setSubtitle('बाप्पाच्या दर्शनासाठी आपले मनःपूर्वक स्वागत आहे.');
     setIsListening(false);
     setIsSpeaking(false);
     setSpeechError('');
     setMicrophoneIssue(null);
-    setRsvp('pending');
     setShowCurtain(true);
-  };
-
-  const updateRsvp = (status: RsvpStatus) => {
-    setRsvp(status);
-    const spokenGuest = guestName.replace(/^प्रिय\s+/u, '');
-    if (status === 'attending') {
-      speak(
-        `धन्यवाद, ${spokenGuest}। आपण सहकुटुंब येणार असल्याचा आम्हाला आनंद आहे। गणपती बाप्पा मोरया!`,
-        80,
-        NARRATION_AUDIO.attending
-      );
-    } else if (status === 'not-attending') {
-      speak(
-        `कळवल्याबद्दल धन्यवाद, ${spokenGuest}। आपली उपस्थिती आम्हाला नक्कीच उणीव भासेल। बाप्पाचे आशीर्वाद आपणास व आपल्या परिवारास सदैव लाभोत।`,
-        80,
-        NARRATION_AUDIO.notAttending
-      );
-    }
   };
 
   return (
@@ -801,7 +717,7 @@ export default function App() {
               if (step === 'personalize') {
                 playWelcomeAndPrepareListening(true);
               } else if (step === 'invitation') {
-                speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation, true);
+                speak(buildInvitationSpeech(guestName), 80, undefined, true);
               } else {
                 setSubtitle('आवाज सुरू आहे. आमंत्रण उघडल्यानंतर निवेदन ऐकू येईल.');
               }
@@ -838,27 +754,22 @@ export default function App() {
               transition={{ duration: prefersReducedMotion ? 0.01 : 0.62, ease: [0.16, 1, 0.3, 1] }}
             >
               <div className="hero-copy">
-                <span className="eyebrow"><Sparkles aria-hidden="true" /> गणेशोत्सव • २०२६</span>
+                <span className="eyebrow"><Sparkles aria-hidden="true" /> मंगल दर्शन • हार्दिक स्वागत</span>
                 <p className="sacred-line">गणपती बाप्पा मोरया</p>
                 <h1>{EVENT.invitationHeading}</h1>
                 <p className="hero-description">
-                  भक्तिभावाने बाप्पाच्या आगमनाचा आनंद साजरा करण्यासाठी आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण.
+                  नवयुवक गणेश उत्सव मंडळ, म्हाडा कॉलनी येथे विराजमान गणरायाचे दर्शन व आशीर्वाद घेण्यासाठी आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण.
                 </p>
 
                 <div className="hero-actions">
                   <button type="button" className="primary-button" onClick={openInvitation}>
-                    <Play aria-hidden="true" /> आपले आमंत्रण उघडा <ArrowRight aria-hidden="true" />
+                    <Play aria-hidden="true" /> स्वागत आमंत्रण उघडा <ArrowRight aria-hidden="true" />
                   </button>
                   <a className="text-link" href={`tel:${EVENT.phone}`}>
                     <Phone aria-hidden="true" /> अध्यक्षांशी संपर्क करा
                   </a>
                 </div>
 
-                <div className="event-facts" aria-label="कार्यक्रमाची माहिती">
-                  <EventFact icon={CalendarDays} label="दिनांक" value={EVENT.dateDisplay} />
-                  <EventFact icon={Clock3} label="वेळ" value={EVENT.timeDisplay} />
-                  <EventFact icon={MapPin} label="स्थळ" value={EVENT.venueName} />
-                </div>
               </div>
 
               <div className="emblem-stage">
@@ -866,7 +777,10 @@ export default function App() {
                 <div className="emblem-frame">
                   <img src={EVENT.logoPath} alt="नवयुवक म्हाडा गणेश उत्सव मंडळ २०२६ चिन्ह" width="1254" height="1254" />
                 </div>
-                <EventCountdown />
+                <div className="welcome-badge">
+                  <Sparkles aria-hidden="true" />
+                  <span>आपले मनःपूर्वक स्वागत आहे</span>
+                </div>
                 <div className="host-note">
                   <Heart aria-hidden="true" />
                   <span>भक्तिभावाने आयोजित<strong>{EVENT.mandalName}</strong></span>
@@ -1028,7 +942,7 @@ export default function App() {
                         return;
                       }
                       setIsMuted(false);
-                      speak(buildInvitationSpeech(guestName), 80, NARRATION_AUDIO.invitation, true);
+                      speak(buildInvitationSpeech(guestName), 80, undefined, true);
                     }}
                     aria-pressed={isSpeaking}
                   >
@@ -1041,7 +955,7 @@ export default function App() {
                 </div>
               </div>
 
-              <InvitationCard guestName={guestName} rsvp={rsvp} onRsvp={updateRsvp} />
+              <InvitationCard guestName={guestName} />
             </motion.section>
           )}
         </AnimatePresence>
@@ -1053,7 +967,6 @@ export default function App() {
         <a href={`tel:${EVENT.phone}`}>{EVENT.president} • {EVENT.phoneDisplay}</a>
       </footer>
 
-      <CelebrationOverlay visible={rsvp === 'attending'} />
     </div>
   );
 }

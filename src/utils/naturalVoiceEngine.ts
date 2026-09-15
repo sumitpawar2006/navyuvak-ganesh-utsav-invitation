@@ -23,8 +23,6 @@ let startTimer: number | null = null;
 
 const formatForSpeech = (value: string) =>
   value
-    .replace(/६:००|\b6:00\s*PM\b/gi, 'सायंकाळी सहा वाजता')
-    .replace(/१४ सप्टेंबर २०२६|\b14 September 2026\b/gi, 'चौदा सप्टेंबर, दोन हजार सव्वीस')
     .replace(/एमआयडीसी|\bMIDC\b/gi, 'एम आय डी सी')
     .replace(/४४००१६|\b440016\b/g, 'चार चार शून्य शून्य एक सहा')
     .replace(/\s+/g, ' ')
