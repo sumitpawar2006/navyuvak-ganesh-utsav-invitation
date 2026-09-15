@@ -20,7 +20,12 @@ import Avatar from './components/Avatar';
 import InvitationCard from './components/InvitationCard';
 import { EVENT, buildInvitationSpeech } from './event';
 import { toMarathiName } from './utils/marathiName';
-import { cancelNaturalSpeech, primeNaturalVoices, speakNaturalText } from './utils/naturalVoiceEngine';
+import {
+  cancelNaturalSpeech,
+  getBestNaturalVoices,
+  primeNaturalVoices,
+  speakNaturalText,
+} from './utils/naturalVoiceEngine';
 
 type AppStep = 'welcome' | 'personalize' | 'invitation';
 type MicrophonePermission = 'unknown' | 'requesting' | 'granted' | 'denied' | 'unavailable';
@@ -28,6 +33,7 @@ type MicrophoneIssue = 'site-blocked' | 'system-blocked' | null;
 
 const NARRATION_AUDIO = {
   welcome: '/audio/welcome-marathi.mp3',
+  invitation: '/audio/invitation-darshan-marathi.mp3',
 } as const;
 
 const WELCOME_SPEECH = `गणपती बाप्पा मोरया! ${EVENT.mandalName}, ${EVENT.locality} तर्फे आपले हार्दिक स्वागत आहे। आपले वैयक्तिक आमंत्रण तयार करण्यासाठी कृपया आपले नाव सांगा।`;
@@ -166,6 +172,16 @@ export default function App() {
         onComplete?.();
       },
     });
+  };
+
+  const speakInvitation = (name: string, forceSound = false) => {
+    const hasMarathiVoice = getBestNaturalVoices().length > 0;
+    speak(
+      buildInvitationSpeech(name),
+      80,
+      hasMarathiVoice ? undefined : NARRATION_AUDIO.invitation,
+      forceSound
+    );
   };
 
   const requestMicrophoneAccess = async () => {
@@ -585,7 +601,7 @@ export default function App() {
     else url.searchParams.set('guest', formattedName);
     window.history.replaceState({}, '', url);
 
-    speak(buildInvitationSpeech(formattedName));
+    speakInvitation(formattedName);
   };
 
   const submitName = (event: FormEvent) => {
@@ -686,7 +702,7 @@ export default function App() {
               if (step === 'personalize') {
                 playWelcomeAndPrepareListening(true);
               } else if (step === 'invitation') {
-                speak(buildInvitationSpeech(guestName), 80, undefined, true);
+                speakInvitation(guestName, true);
               } else {
                 setSubtitle('आवाज सुरू आहे. आमंत्रण उघडल्यानंतर निवेदन ऐकू येईल.');
               }
@@ -911,7 +927,7 @@ export default function App() {
                         return;
                       }
                       setIsMuted(false);
-                      speak(buildInvitationSpeech(guestName), 80, undefined, true);
+                      speakInvitation(guestName, true);
                     }}
                     aria-pressed={isSpeaking}
                   >

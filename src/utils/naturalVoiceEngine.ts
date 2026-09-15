@@ -207,6 +207,10 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
 
     void waitForVoices().then((voices) => {
       if (activeSession?.id !== sessionId) return;
+      if (voices.length === 0) {
+        fail();
+        return;
+      }
 
       const chunks = createSpeechChunks(rawText);
       if (chunks.length === 0) {
