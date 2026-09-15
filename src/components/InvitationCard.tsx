@@ -57,7 +57,7 @@ export default function InvitationCard({ guestName }: InvitationCardProps) {
     const copiedImmediately = copyTextImmediately(invitationText);
     if (copiedImmediately) {
       setCopied(true);
-      setActionMessage('आमंत्रणाची लिंक कॉपी झाली. शेअर करण्याचे पर्याय उघडत आहेत…');
+      setActionMessage('आमंत्रणाच्या दुव्याची प्रत तयार झाली. शेअर करण्याचे पर्याय उघडत आहेत…');
       window.setTimeout(() => setCopied(false), 2200);
     } else {
       setActionMessage('शेअर करण्याचे पर्याय उघडत आहेत…');
@@ -70,24 +70,24 @@ export default function InvitationCard({ guestName }: InvitationCardProps) {
         return;
       } catch (error) {
         if ((error as DOMException)?.name === 'AbortError') {
-          setActionMessage(copiedImmediately ? 'शेअर करणे रद्द केले; आमंत्रणाची लिंक कॉपी केलेली आहे.' : 'शेअर करणे रद्द केले.');
+          setActionMessage(copiedImmediately ? 'शेअर करणे रद्द केले; आमंत्रणाच्या दुव्याची प्रत तयार आहे.' : 'शेअर करणे रद्द केले.');
           return;
         }
       }
     }
 
     if (copiedImmediately) {
-      setActionMessage('आमंत्रणाची लिंक कॉपी झाली. आता ती कुठेही शेअर करा.');
+      setActionMessage('आमंत्रणाच्या दुव्याची प्रत तयार झाली. आता तो कुठेही शेअर करा.');
       return;
     }
 
     try {
       await copyText(invitationText);
       setCopied(true);
-      setActionMessage('आमंत्रणाची लिंक कॉपी झाली. आता ती कुठेही शेअर करा.');
+      setActionMessage('आमंत्रणाच्या दुव्याची प्रत तयार झाली. आता तो कुठेही शेअर करा.');
       window.setTimeout(() => setCopied(false), 2200);
     } catch {
-      setActionMessage('लिंक कॉपी झाली नाही. WhatsApp बटण वापरून शेअर करा.');
+      setActionMessage('दुवा प्रतिकृत झाला नाही. व्हॉट्सअॅपचे बटण वापरून शेअर करा.');
     }
   };
 
@@ -107,7 +107,7 @@ export default function InvitationCard({ guestName }: InvitationCardProps) {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      setActionMessage('आमंत्रणाचे चित्र डाउनलोड झाले.');
+      setActionMessage('आमंत्रणाचे चित्र जतन झाले.');
     } catch {
       setActionMessage('आमंत्रणाचे चित्र तयार झाले नाही. कृपया पुन्हा प्रयत्न करा.');
     } finally {
@@ -181,21 +181,21 @@ export default function InvitationCard({ guestName }: InvitationCardProps) {
         <div className="action-panel compact">
           <span className="panel-label">जतन करा व शेअर करा</span>
           <div className="action-list">
-            <a href={EVENT.mapUrl} onClick={() => setActionMessage('Google Maps मध्ये अचूक स्थळ उघडत आहे…')}>
+            <a href={EVENT.mapUrl} onClick={() => setActionMessage('गुगल नकाशामध्ये अचूक स्थळ उघडत आहे…')}>
               <Navigation aria-hidden="true" /> मार्गदर्शन मिळवा
             </a>
             <button type="button" onClick={shareInvitation}>
               {copied ? <Copy aria-hidden="true" /> : <Share2 aria-hidden="true" />}
-              {copied ? 'लिंक कॉपी झाली' : 'आमंत्रण शेअर करा'}
+              {copied ? 'दुव्याची प्रत तयार' : 'आमंत्रण शेअर करा'}
             </button>
-            <a href={whatsAppUrl} onClick={() => setActionMessage('WhatsApp मध्ये तयार संदेश उघडत आहे…')}>
-              <MessageCircle aria-hidden="true" /> WhatsApp वर शेअर करा
+            <a href={whatsAppUrl} onClick={() => setActionMessage('व्हॉट्सअॅपमध्ये तयार संदेश उघडत आहे…')}>
+              <MessageCircle aria-hidden="true" /> व्हॉट्सअॅपवर शेअर करा
             </a>
             <button type="button" onClick={downloadInvitation} disabled={isDownloading}>
-              <Download aria-hidden="true" /> {isDownloading ? 'चित्र तयार होत आहे…' : 'आमंत्रण डाउनलोड करा'}
+              <Download aria-hidden="true" /> {isDownloading ? 'चित्र तयार होत आहे…' : 'आमंत्रणाचे चित्र जतन करा'}
             </button>
             <a href={`tel:${EVENT.phone}`} onClick={() => setActionMessage('अध्यक्षांना कॉल करण्यासाठी फोन उघडत आहे…')}>
-              <Phone aria-hidden="true" /> {EVENT.phoneDisplay} वर कॉल करा
+              <Phone aria-hidden="true" /> {EVENT.phoneDisplay} वर संपर्क करा
             </a>
           </div>
           <div className="action-feedback" role="status" aria-live="polite">

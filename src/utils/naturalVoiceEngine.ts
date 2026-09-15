@@ -96,12 +96,6 @@ const isMarathiVoice = (voice: SpeechSynthesisVoice) => {
   return language === 'mr-in' || language.startsWith('mr-') || /marathi|मराठी/.test(name);
 };
 
-const isHindiVoice = (voice: SpeechSynthesisVoice) => {
-  const language = voice.lang.toLowerCase().replace('_', '-');
-  const name = voice.name.toLowerCase();
-  return language === 'hi-in' || language.startsWith('hi-') || /hindi|हिंदी/.test(name);
-};
-
 export const getBestNaturalVoices = () => {
   if (!window.speechSynthesis) return [];
   const voices = [...window.speechSynthesis.getVoices()];
@@ -109,11 +103,7 @@ export const getBestNaturalVoices = () => {
     .filter(isMarathiVoice)
     .sort((first, second) => voiceScore(second) - voiceScore(first));
 
-  if (marathiVoices.length > 0) return marathiVoices;
-
-  return voices
-    .filter(isHindiVoice)
-    .sort((first, second) => voiceScore(second) - voiceScore(first));
+  return marathiVoices;
 };
 
 const waitForVoices = () =>

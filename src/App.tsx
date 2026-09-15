@@ -49,19 +49,7 @@ const readMicrophonePermissionState = async (): Promise<PermissionState | null> 
   }
 };
 
-const INDIAN_NAME_LANGUAGES = [
-  { language: 'mr-IN', label: 'मराठीत' },
-  { language: 'hi-IN', label: 'हिंदीत' },
-  { language: 'en-IN', label: 'भारतीय इंग्रजीत' },
-  { language: 'gu-IN', label: 'ગુજરાતીમાં' },
-  { language: 'bn-IN', label: 'বাংলায়' },
-  { language: 'pa-IN', label: 'ਪੰਜਾਬੀ ਵਿੱਚ' },
-  { language: 'ta-IN', label: 'தமிழில்' },
-  { language: 'te-IN', label: 'తెలుగులో' },
-  { language: 'kn-IN', label: 'ಕನ್ನಡದಲ್ಲಿ' },
-  { language: 'ml-IN', label: 'മലയാളത്തിൽ' },
-  { language: 'ur-IN', label: 'اردو میں' },
-] as const;
+const MARATHI_RECOGNITION_LANGUAGE = 'mr-IN';
 
 const cleanGuestName = (value: string) =>
   value
@@ -185,7 +173,7 @@ export default function App() {
       microphonePermissionRef.current = 'unavailable';
       setMicrophonePermission('unavailable');
       setMicrophoneIssue(null);
-      setSpeechError('या ब्राउझरमध्ये आवाजातून नाव घेण्याची सुविधा उपलब्ध नाही. Chrome किंवा Edge मध्ये दुवा उघडा किंवा नाव टाइप करा.');
+      setSpeechError('या ब्राउझरमध्ये आवाजातून नाव घेण्याची सुविधा उपलब्ध नाही. क्रोम किंवा एजमध्ये दुवा उघडा किंवा नाव लिहा.');
       setSubtitle('मायक्रोफोन उपलब्ध नाही. कृपया आपले नाव खाली टाइप करा.');
       return false;
     }
@@ -297,7 +285,7 @@ export default function App() {
     const sessionId = recognitionSessionRef.current;
 
     if (!supportsVoiceName) {
-      setSpeechError('आवाजातून नाव देण्यासाठी हा दुवा Chrome किंवा Edge मध्ये उघडा. येथे नाव टाइप करूनही पुढे जाता येईल.');
+      setSpeechError('आवाजातून नाव देण्यासाठी हा दुवा क्रोम किंवा एजमध्ये उघडा. येथे नाव लिहूनही पुढे जाता येईल.');
       setSubtitle('मायक्रोफोन उपलब्ध नाही. कृपया आपले नाव खाली टाइप करा.');
       return;
     }
@@ -312,17 +300,6 @@ export default function App() {
     if (recognitionSessionRef.current !== sessionId) return;
 
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    const deviceLanguages = (window.navigator.languages?.length
-      ? window.navigator.languages
-      : [window.navigator.language]
-    ).filter(Boolean);
-    const deviceModes = deviceLanguages.slice(0, 1).map((language) => ({ language, label: 'फोनच्या भाषेत' }));
-    const recognitionModes = [INDIAN_NAME_LANGUAGES[0], ...deviceModes, INDIAN_NAME_LANGUAGES[1], INDIAN_NAME_LANGUAGES[2]].filter(
-      (mode, index, modes) => modes.findIndex(
-        (candidate) => candidate.language.toLowerCase() === mode.language.toLowerCase()
-      ) === index
-    );
-    let modeIndex = 0;
     let recognizedName = '';
     let latestName = '';
     let retryAfterEnd = false;
@@ -354,13 +331,12 @@ export default function App() {
     const startRecognitionAttempt = () => {
       if (recognitionSessionRef.current !== sessionId) return;
 
-      const currentMode = recognitionModes[modeIndex];
       const recognition = new SpeechRecognition();
       recognitionRef.current = recognition;
       recognitionStarted = false;
       soundDetected = false;
       speechDetected = false;
-      recognition.lang = currentMode.language;
+      recognition.lang = MARATHI_RECOGNITION_LANGUAGE;
       recognition.interimResults = true;
       recognition.continuous = false;
       recognition.maxAlternatives = 5;
@@ -372,7 +348,7 @@ export default function App() {
         clearStartWatchdog();
         setIsListening(true);
         setSpeechError('');
-        setSubtitle(`मायक्रोफोन सुरू आहे. आता आपले नाव ${currentMode.label} स्पष्ट बोला…`);
+        setSubtitle('मायक्रोफोन सुरू आहे. आता आपले नाव मराठीत स्पष्ट बोला…');
       };
 
       recognition.onsoundstart = () => {
@@ -412,34 +388,27 @@ export default function App() {
         clearStartWatchdog();
         setIsListening(false);
         const errorCode = String(event.error ?? 'unknown');
-        const canTryAnotherLanguage = ['language-not-supported', 'language-unavailable'].includes(errorCode)
-          && modeIndex < recognitionModes.length - 1;
         const canRetrySilence = errorCode === 'no-speech' && noSpeechRetries < 1;
-        const canRetry = canTryAnotherLanguage || canRetrySilence;
 
-        if (canRetry) {
-          if (canTryAnotherLanguage) modeIndex += 1;
+        if (canRetrySilence) {
           if (canRetrySilence) noSpeechRetries += 1;
           retryAfterEnd = true;
           finalError = '';
           setSpeechError('');
-          setSubtitle(
-            canTryAnotherLanguage
-              ? `${recognitionModes[modeIndex].label} नाव ऐकण्याचा प्रयत्न करत आहे…`
-              : 'आवाज मिळाला नाही. मायक्रोफोन एकदा पुन्हा सुरू करत आहे…'
-          );
+          setSubtitle('आवाज मिळाला नाही. मायक्रोफोन एकदा पुन्हा सुरू करत आहे…');
           return;
         }
 
         const messages: Record<string, string> = {
           'not-allowed': 'मायक्रोफोन सुरू झाला नाही. कृपया पुन्हा प्रयत्न करा किंवा नाव लिहा.',
-          'service-not-allowed': 'या ब्राउझरने आवाज ओळख सेवा रोखली आहे. Chrome मध्ये दुवा उघडा किंवा नाव टाइप करा.',
+          'service-not-allowed': 'या ब्राउझरने आवाज ओळख सेवा रोखली आहे. क्रोममध्ये दुवा उघडा किंवा नाव लिहा.',
           'audio-capture': 'फोनचा मायक्रोफोन उपलब्ध नाही. पुन्हा प्रयत्न करा किंवा नाव लिहा.',
-          network: 'आवाज ओळखण्यासाठी इंटरनेट आवश्यक आहे. मोबाइल डेटा किंवा Wi-Fi तपासा आणि पुन्हा “नाव बोला” दाबा.',
+          network: 'आवाज ओळखण्यासाठी इंटरनेट आवश्यक आहे. मोबाइल डेटा किंवा वाय-फाय तपासा आणि पुन्हा “नाव बोला” दाबा.',
           'no-speech': soundDetected
             ? 'आवाज मिळाला, पण नाव स्पष्ट ओळखता आले नाही. फोनजवळ पूर्ण नाव बोला आणि पुन्हा प्रयत्न करा.'
             : 'मायक्रोफोन सुरू झाला, पण आवाज मिळाला नाही. कृपया पुन्हा प्रयत्न करा.',
-          'language-not-supported': 'या फोनवर मराठी, हिंदी किंवा भारतीय इंग्रजी आवाज ओळख उपलब्ध नाही. कृपया नाव टाइप करा.',
+          'language-not-supported': 'या फोनवर मराठी आवाज ओळख उपलब्ध नाही. कृपया नाव लिहा.',
+          'language-unavailable': 'या फोनवर मराठी आवाज ओळख उपलब्ध नाही. कृपया नाव लिहा.',
           aborted: finalError || 'आवाज ऐकणे थांबले. पुन्हा “नाव बोला” दाबा.',
         };
         if (errorCode === 'not-allowed') {
@@ -875,10 +844,10 @@ export default function App() {
                   <p id="name-help" className="field-help">आपले नाव फक्त हे आमंत्रण वैयक्तिक करण्यासाठी वापरले जाते.</p>
                   {!supportsVoiceName && (
                     <div id="voice-support-help" className="field-help voice-support-note">
-                      <span>या ब्राउझरमध्ये नाव ऐकण्याची सुविधा नाही. Chrome किंवा Edge मध्ये उघडा; किंवा वर आपले नाव टाइप करा.</span>
+                      <span>या ब्राउझरमध्ये नाव ऐकण्याची सुविधा नाही. क्रोम किंवा एजमध्ये उघडा; किंवा वर आपले नाव लिहा.</span>
                       {isAndroidDevice && (
                         <a className="open-chrome-button" href={androidChromeUrl}>
-                          <ExternalLink aria-hidden="true" /> Chrome मध्ये उघडा
+                          <ExternalLink aria-hidden="true" /> क्रोममध्ये उघडा
                         </a>
                       )}
                     </div>
@@ -896,9 +865,9 @@ export default function App() {
                           पुन्हा नाव बोला
                         </button>
                       )}
-                      {isAndroidDevice && speechError.includes('Chrome') && (
+                      {isAndroidDevice && speechError.includes('क्रोम') && (
                         <a className="open-chrome-button" href={androidChromeUrl}>
-                          <ExternalLink aria-hidden="true" /> Chrome मध्ये उघडा
+                          <ExternalLink aria-hidden="true" /> क्रोममध्ये उघडा
                         </a>
                       )}
                     </div>
@@ -963,7 +932,7 @@ export default function App() {
 
       <footer className="site-footer">
         <span>{EVENT.mandalName} • {EVENT.locality}</span>
-        <span className="developer-credit">Developed by <strong>Sumit Pawar</strong></span>
+        <span className="developer-credit">विकसित केले: <strong>सुमित पवार</strong></span>
         <a href={`tel:${EVENT.phone}`}>{EVENT.president} • {EVENT.phoneDisplay}</a>
       </footer>
 
