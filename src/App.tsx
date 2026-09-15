@@ -22,7 +22,6 @@ import { EVENT, buildInvitationSpeech } from './event';
 import { toMarathiName } from './utils/marathiName';
 import {
   cancelNaturalSpeech,
-  getBestNaturalVoices,
   primeNaturalVoices,
   speakNaturalText,
 } from './utils/naturalVoiceEngine';
@@ -57,6 +56,11 @@ const readMicrophonePermissionState = async (): Promise<PermissionState | null> 
 
 const MARATHI_RECOGNITION_LANGUAGE = 'mr-IN';
 
+const getInvitationNarrationAudio = (name: string) => {
+  const addressName = name.replace(/^प्रिय\s+/u, '').trim();
+  return `/api/narration?name=${encodeURIComponent(addressName)}`;
+};
+
 const cleanGuestName = (value: string) =>
   value
     .trim()
@@ -72,6 +76,23 @@ const cleanGuestName = (value: string) =>
     .join(' ');
 
 const formatGuestName = (value: string) => toMarathiName(cleanGuestName(value));
+
+const formatGuestNamePrecisely = async (value: string) => {
+  const cleanedName = cleanGuestName(value);
+  const fallbackName = formatGuestName(cleanedName);
+  if (!/[a-z]/i.test(cleanedName)) return fallbackName;
+
+  try {
+    const response = await fetch(`/api/transliterate?name=${encodeURIComponent(cleanedName)}`);
+    if (!response.ok) return fallbackName;
+    const result = await response.json() as { name?: unknown; fallback?: unknown };
+    return result.fallback !== true && typeof result.name === 'string' && result.name.trim()
+      ? cleanGuestName(result.name)
+      : fallbackName;
+  } catch {
+    return fallbackName;
+  }
+};
 
 export default function App() {
   const prefersReducedMotion = useReducedMotion();
@@ -103,6 +124,7 @@ export default function App() {
   );
   const recognitionRef = useRef<any>(null);
   const recognitionSessionRef = useRef(0);
+  const namePreparationRef = useRef(0);
   const microphonePermissionRef = useRef<MicrophonePermission>('unknown');
   const permissionRecoveryPendingRef = useRef(false);
   const stepRef = useRef<AppStep>(step);
@@ -144,7 +166,9 @@ export default function App() {
     startDelayMs = 80,
     audioUrl?: string,
     forceSound = false,
-    onComplete?: () => void
+    onComplete?: () => void,
+    fallbackAudioUrl?: string,
+    allowSpeechSynthesisFallback = true
   ) => {
     recognitionSessionRef.current += 1;
     recognitionRef.current?.abort?.();
@@ -161,6 +185,8 @@ export default function App() {
       isMuted: false,
       startDelayMs,
       audioUrl,
+      fallbackAudioUrl,
+      allowSpeechSynthesisFallback,
       onStart: () => {
         setIsSpeaking(true);
       },
@@ -175,12 +201,14 @@ export default function App() {
   };
 
   const speakInvitation = (name: string, forceSound = false) => {
-    const hasMarathiVoice = getBestNaturalVoices().length > 0;
     speak(
       buildInvitationSpeech(name),
       80,
-      hasMarathiVoice ? undefined : NARRATION_AUDIO.invitation,
-      forceSound
+      getInvitationNarrationAudio(name),
+      forceSound,
+      undefined,
+      NARRATION_AUDIO.invitation,
+      false
     );
   };
 
@@ -364,7 +392,7 @@ export default function App() {
         clearStartWatchdog();
         setIsListening(true);
         setSpeechError('');
-        setSubtitle('मायक्रोफोन सुरू आहे. आता आपले नाव मराठीत स्पष्ट बोला…');
+        setSubtitle('मायक्रोफोन सुरू आहे. आता कोणत्याही भाषेत आपले नाव स्पष्ट बोला…');
       };
 
       recognition.onsoundstart = () => {
@@ -588,10 +616,12 @@ export default function App() {
     };
   }, [supportsVoiceName]);
 
-  const revealInvitation = (name: string) => {
+  const revealInvitation = async (name: string) => {
     recognitionSessionRef.current += 1;
     recognitionRef.current?.abort?.();
-    const formattedName = formatGuestName(name) || 'प्रिय भाविक';
+    const preparationId = ++namePreparationRef.current;
+    const formattedName = await formatGuestNamePrecisely(name) || 'प्रिय भाविक';
+    if (namePreparationRef.current !== preparationId) return;
     setGuestName(formattedName);
     setTypedName(formattedName === 'प्रिय भाविक' ? '' : formattedName);
     setStep('invitation');
@@ -610,11 +640,12 @@ export default function App() {
       setSpeechError('कृपया आपले नाव लिहा किंवा भाविक म्हणून पुढे जा.');
       return;
     }
-    revealInvitation(typedName);
+    void revealInvitation(typedName);
   };
 
   const reset = () => {
     recognitionSessionRef.current += 1;
+    namePreparationRef.current += 1;
     recognitionRef.current?.abort?.();
     cancelNaturalSpeech();
     window.history.replaceState({}, '', window.location.pathname);

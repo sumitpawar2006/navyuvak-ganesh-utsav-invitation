@@ -4,6 +4,8 @@ type SpeechOptions = {
   isMuted?: boolean;
   startDelayMs?: number;
   audioUrl?: string;
+  fallbackAudioUrl?: string;
+  allowSpeechSynthesisFallback?: boolean;
   onStart?: () => void;
   onEnd?: () => void;
   onComplete?: () => void;
@@ -162,7 +164,17 @@ export const cancelNaturalSpeech = () => {
 };
 
 export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
-  const { isMuted, startDelayMs = 80, audioUrl, onStart, onEnd, onComplete, onError } = options;
+  const {
+    isMuted,
+    startDelayMs = 80,
+    audioUrl,
+    fallbackAudioUrl,
+    allowSpeechSynthesisFallback = true,
+    onStart,
+    onEnd,
+    onComplete,
+    onError,
+  } = options;
   cancelNaturalSpeech();
 
   const sessionId = ++sessionCounter;
@@ -274,18 +286,7 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
     return;
   }
 
-  const audio = new Audio(audioUrl);
   let fallingBack = false;
-  activeAudio = audio;
-  audio.preload = 'auto';
-  audio.setAttribute('playsinline', '');
-
-  const fallbackToSpeech = () => {
-    if (fallingBack || activeSession?.id !== sessionId) return;
-    fallingBack = true;
-    releaseActiveAudio();
-    startSpeechSynthesis();
-  };
 
   const markStarted = () => {
     if (activeSession?.id !== sessionId || started) return;
@@ -293,16 +294,50 @@ export const speakNaturalText = (rawText: string, options: SpeechOptions) => {
     onStart?.();
   };
 
-  audio.muted = false;
-  audio.volume = 1;
-  audio.onplay = markStarted;
-  audio.onplaying = markStarted;
-  audio.onended = () => finish(true);
-  audio.onerror = fallbackToSpeech;
+  const playAudio = (url: string, onFailure: () => void) => {
+    if (activeSession?.id !== sessionId) return;
+    const audio = new Audio(url);
+    let failed = false;
+    activeAudio = audio;
+    audio.preload = 'auto';
+    audio.setAttribute('playsinline', '');
+    audio.muted = false;
+    audio.volume = 1;
+    audio.onplay = markStarted;
+    audio.onplaying = markStarted;
+    audio.onended = () => finish(true);
+
+    const failAudio = () => {
+      if (failed || activeSession?.id !== sessionId) return;
+      failed = true;
+      releaseActiveAudio();
+      onFailure();
+    };
+
+    audio.onerror = failAudio;
+    void audio.play()
+      .then(markStarted)
+      .catch(failAudio);
+  };
+
+  const fallbackToSpeech = () => {
+    if (fallingBack || activeSession?.id !== sessionId) return;
+    fallingBack = true;
+    releaseActiveAudio();
+
+    if (fallbackAudioUrl && fallbackAudioUrl !== audioUrl) {
+      playAudio(
+        fallbackAudioUrl,
+        allowSpeechSynthesisFallback ? startSpeechSynthesis : fail
+      );
+      return;
+    }
+
+    if (allowSpeechSynthesisFallback) startSpeechSynthesis();
+    else fail();
+  };
 
   // The audible play call stays inside the original tap handler. This is the
   // most reliable path in iOS Safari and WhatsApp's in-app browser.
-  void audio.play()
-    .then(markStarted)
-    .catch(fallbackToSpeech);
+  playAudio(audioUrl, fallbackToSpeech);
 };
