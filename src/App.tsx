@@ -979,7 +979,16 @@ export default function App() {
 
       <footer className="site-footer">
         <span>{EVENT.mandalName} • {EVENT.locality}</span>
-        <span className="developer-credit">विकसित केले: <strong>सुमित पवार</strong></span>
+        <div className="developer-credit">
+          <span>Developed by <strong>{EVENT.developer}</strong></span>
+          <a
+            href={`tel:${EVENT.developerPhone}`}
+            aria-label={`Call ${EVENT.developer} on ${EVENT.developerPhoneDisplay} to create a digital invitation`}
+          >
+            <Phone aria-hidden="true" />
+            For digital invitations: <strong>{EVENT.developerPhoneDisplay}</strong>
+          </a>
+        </div>
         <a href={`tel:${EVENT.phone}`}>{EVENT.president} • {EVENT.phoneDisplay}</a>
       </footer>
 

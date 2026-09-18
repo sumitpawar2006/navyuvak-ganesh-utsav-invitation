@@ -9,6 +9,9 @@ export const EVENT = {
   presidentMandalName: 'नवयुवक म्हाडा गणेश उत्सव मंडळ',
   phoneDisplay: '८८८८६६५५३६',
   phone: '+918888665536',
+  developer: 'Sumit Pawar',
+  developerPhoneDisplay: '9359549943',
+  developerPhone: '+919359549943',
   logoPath: '/assets/navyuvak-mandal-2026.jpeg',
   mapUrl: 'https://www.google.com/maps/search/?api=1&query=21.103106%2C78.988185',
 } as const;
