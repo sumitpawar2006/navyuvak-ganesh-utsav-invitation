@@ -25,7 +25,7 @@ export const renderLoginPage = () => document(`
       <div class="login-icon">${lockIcon}</div>
       <span class="eyebrow">PRIVATE DEVELOPER ACCESS</span>
       <h1 id="loginTitle">Invitation Control</h1>
-      <p class="lead">Sign in to privately turn the invitation website ON or OFF. No dashboard link or control appears on the public invitation.</p>
+      <p class="lead">Sign in to privately switch between the live invitation and its professional closing page. No dashboard link or control appears publicly.</p>
       <form id="loginForm" novalidate>
         <label for="password">Developer password</label>
         <div class="password-field">
@@ -57,7 +57,7 @@ export const renderDashboardPage = () => document(`
         </section>
 
         <section class="card controls-card" aria-labelledby="controlsTitle">
-          <div class="section-header"><div><span class="eyebrow">LIVE VERCEL CONTROL</span><h2 id="controlsTitle">Website controls</h2><p>Each state change requires your confirmation.</p></div></div>
+          <div class="section-header"><div><span class="eyebrow">PRIVATE PRODUCTION CONTROL</span><h2 id="controlsTitle">Website controls</h2><p>Switch safely between the invitation and the professional closing page.</p></div></div>
           <div class="control-grid">
             <button id="resumeButton" class="control-button resume" type="button" data-action="resume" disabled>${powerIcon}<span>Turn website ON</span></button>
             <button id="pauseButton" class="control-button pause" type="button" data-action="pause" disabled>${powerIcon}<span>Turn website OFF</span></button>
@@ -80,7 +80,7 @@ export const renderDashboardPage = () => document(`
         <section class="card info-card visitor-card" aria-labelledby="visitorTitle">
           <div class="info-icon">${globeIcon}</div>
           <h2 id="visitorTitle">What visitors see</h2>
-          <p id="visitorText">The public website never displays this dashboard or its ON/OFF controls.</p>
+          <p id="visitorText">When OFF, visitors see only a polished Marathi thank-you page—never a Vercel error or these controls.</p>
         </section>
       </aside>
     </div>

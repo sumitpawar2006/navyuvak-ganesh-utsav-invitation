@@ -80,8 +80,8 @@ label { display: block; margin-bottom: 8px; font-size: 0.88rem; font-weight: 800
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 0 5px rgba(245, 190, 83, 0.12); }
 .status-pill.online { color: #9df2c2; border-color: rgba(53, 208, 127, 0.4); background: var(--green-soft); }
 .status-pill.online .status-dot { background: var(--green); box-shadow: 0 0 0 5px var(--green-soft); }
-.status-pill.offline { color: #ffb7b7; border-color: rgba(255, 116, 116, 0.4); background: var(--red-soft); }
-.status-pill.offline .status-dot { background: var(--red); box-shadow: 0 0 0 5px var(--red-soft); }
+.status-pill.offline { color: #ffe1a1; border-color: rgba(245, 190, 83, 0.42); background: rgba(245, 190, 83, 0.11); }
+.status-pill.offline .status-dot { background: var(--amber); box-shadow: 0 0 0 5px rgba(245, 190, 83, 0.12); }
 .hero-card h1 { margin: 22px 0 10px; max-width: 700px; font-size: clamp(2rem, 5vw, 3.5rem); line-height: 1.04; letter-spacing: -0.045em; text-wrap: balance; }
 .hero-card .lead { max-width: 700px; margin: 0; }
 .site-address { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: 24px; padding: 12px 14px; color: #d8e6f7; border: 1px solid var(--border-soft); border-radius: 13px; background: rgba(5, 14, 26, 0.62); text-decoration: none; font-family: Consolas, monospace; font-size: 0.82rem; }

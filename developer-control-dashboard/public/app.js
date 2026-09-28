@@ -70,16 +70,16 @@ if (page === 'dashboard') {
   const updateStatus = (status) => {
     currentStatus = status;
     statusPill.className = `status-pill ${status}`;
-    statusLabel.textContent = status === 'online' ? 'ONLINE' : status === 'offline' ? 'OFFLINE' : 'UNKNOWN';
-    statusTitle.textContent = status === 'online' ? 'Invitation website is live' : status === 'offline' ? 'Invitation website is paused' : 'Website status unavailable';
+    statusLabel.textContent = status === 'online' ? 'INVITATION LIVE' : status === 'offline' ? 'CLOSING PAGE LIVE' : 'UNKNOWN';
+    statusTitle.textContent = status === 'online' ? 'Invitation website is live' : status === 'offline' ? 'Professional closing page is live' : 'Website status unavailable';
     statusCopy.textContent = status === 'online'
       ? 'Production traffic is active. Visitors can open and use the invitation website.'
       : status === 'offline'
-        ? 'Production traffic is stopped. Visitors see a Vercel unavailable page, while the code remains safe.'
+        ? 'Visitors see the branded Marathi thank-you page. No error page or developer control is visible.'
         : 'The current production state could not be confirmed. Refresh before making a change.';
     resumeButton.disabled = status !== 'offline';
     pauseButton.disabled = status !== 'online';
-    message.textContent = status === 'online' ? 'Website is currently available to visitors.' : status === 'offline' ? 'Website is currently unavailable to visitors.' : 'Refresh the page to check again.';
+    message.textContent = status === 'online' ? 'The full invitation is currently visible.' : status === 'offline' ? 'The professional closing page is currently visible.' : 'Refresh the page to check again.';
   };
 
   const loadStatus = async () => {
@@ -97,8 +97,8 @@ if (page === 'dashboard') {
     const turningOn = action === 'resume';
     confirmTitle.textContent = turningOn ? 'Turn website ON?' : 'Turn website OFF?';
     confirmCopy.textContent = turningOn
-      ? 'Visitors will be able to open the invitation website again.'
-      : 'Visitors will immediately see an unavailable page. The source code will remain safe.';
+      ? 'Visitors will see the full invitation website again.'
+      : 'Visitors will see the professional Marathi thank-you page. No Vercel error will appear.';
     confirmButton.textContent = turningOn ? 'Yes, turn it ON' : 'Yes, turn it OFF';
     confirmButton.classList.toggle('danger', !turningOn);
     confirmLayer.hidden = false;
@@ -128,7 +128,7 @@ if (page === 'dashboard') {
       const data = await request('/api/control', { method: 'POST', body: JSON.stringify({ action }) });
       confirmLayer.hidden = true;
       updateStatus(data.status);
-      message.textContent = data.status === 'online' ? 'Website turned ON successfully.' : 'Website turned OFF successfully.';
+      message.textContent = data.status === 'online' ? 'Invitation is now live.' : 'Professional closing page is now live.';
     } catch (error) {
       message.textContent = error.message;
       confirmLayer.hidden = true;

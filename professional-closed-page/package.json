@@ -1,0 +1,12 @@
+{
+  "name": "navyuvak-ganesh-utsav-closing-page",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^7.1.6"
+  }
+}
