@@ -1,8 +1,8 @@
 import { hasSameOrigin, isAuthenticated, sendJson } from '../lib/auth.mjs';
 
-const PROJECT_ID = 'prj_8cHQDsorGRcBoY2dGKQfiz9zIV5E';
 const TEAM_ID = 'team_0PlzbptZgdyMAWWrlM9BEplm';
 const ACTIVE_DEPLOYMENT_ID = process.env.INVITATION_ACTIVE_DEPLOYMENT_ID ?? 'dpl_CcbvzwQnzNh3eS894k6Jki1GHCiV';
+const PUBLIC_ALIAS = 'navyuvak-ganesh-utsav-2026.vercel.app';
 
 export default async function handler(request, response) {
   if (request.method !== 'POST') return sendJson(response, 405, { error: 'Method not allowed.' });
@@ -16,13 +16,13 @@ export default async function handler(request, response) {
   if (!deploymentId) return sendJson(response, 503, { error: 'The professional closing page is not configured yet.' });
 
   try {
-    const vercelResponse = await fetch(`https://api.vercel.com/v10/projects/${PROJECT_ID}/promote/${deploymentId}?teamId=${TEAM_ID}`, {
+    const vercelResponse = await fetch(`https://api.vercel.com/now/deployments/${deploymentId}/aliases?teamId=${TEAM_ID}`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${process.env.VERCEL_API_TOKEN}`,
         'Content-Type': 'application/json',
       },
-      body: '{}',
+      body: JSON.stringify({ alias: PUBLIC_ALIAS }),
     });
     const result = await vercelResponse.json().catch(() => ({}));
     if (!vercelResponse.ok) {
