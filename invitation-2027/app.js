@@ -81,7 +81,7 @@ const findIndianVoice = () => {
     return 4;
   };
   const warmVoice = /(female|woman|heera|swara|kalpana|lekha|veena|raveena|neerja|aditi)/i;
-  return [...voices].sort((a, b) => {
+  return voices.filter((voice) => languageRank(voice) < 4).sort((a, b) => {
     const languageDifference = languageRank(a) - languageRank(b);
     if (languageDifference !== 0) return languageDifference;
     return Number(warmVoice.test(b.name)) - Number(warmVoice.test(a.name));
