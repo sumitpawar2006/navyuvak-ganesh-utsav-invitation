@@ -66,14 +66,14 @@ a { color: inherit; }
 .curtain-right span { left: 0; }
 .curtain-stage.opening .curtain-left { transform: translateX(-101%); }
 .curtain-stage.opening .curtain-right { transform: translateX(101%); }
-.curtain-center { position: relative; z-index: 2; width: min(620px, calc(100% - 32px)); padding: 34px 24px; text-align: center; transition: opacity 700ms ease, transform 700ms ease; }
+.curtain-center { container-type: inline-size; position: relative; z-index: 2; width: min(620px, calc(100% - 32px)); min-width: 0; padding: 34px 24px; text-align: center; transition: opacity 700ms ease, transform 700ms ease; }
 .curtain-stage.opening .curtain-center { opacity: 0; transform: scale(.96); }
 .curtain-blessing { margin: 0 0 16px; color: var(--gold-light); font-family: var(--display); font-weight: 700; }
 .curtain-seal { display: grid; place-items: center; width: 98px; aspect-ratio: 1; margin: 0 auto 24px; border: 1px solid rgba(255,225,156,.75); border-radius: 50%; background: radial-gradient(circle, #ffd98b 0 37%, #c68220 38% 50%, #651208 51% 58%, transparent 59%); box-shadow: 0 0 0 8px rgba(225,169,66,.11), 0 20px 60px rgba(0,0,0,.56); }
 .curtain-seal span { color: #3a0804; font-family: var(--display); font-size: 1.9rem; font-weight: 800; }
 .overline { margin: 0; color: #f5d7ad; font-size: .76rem; font-weight: 800; letter-spacing: .06em; }
-.curtain-center h1 { margin: 10px 0 0; font-family: var(--display); font-size: clamp(2.55rem, 7vw, 5.4rem); line-height: 1.1; text-wrap: balance; }
-.curtain-center h1 strong { display: block; color: var(--gold-light); font-size: .78em; letter-spacing: .14em; }
+.curtain-center h1 { width: 100%; max-width: 100%; margin: 10px 0 0; font-family: var(--display); font-size: clamp(2.15rem, 11cqi, 4.75rem); line-height: 1.12; letter-spacing: -.025em; overflow-wrap: normal; word-break: keep-all; text-wrap: balance; }
+.curtain-center h1 strong { display: block; margin-top: 4px; color: var(--gold-light); font-size: .78em; letter-spacing: .1em; }
 .curtain-copy { margin: 12px 0 0; color: #ead7c2; }
 .reveal-button { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 56px; margin-top: 24px; padding: 12px 24px; color: #300804; border: 1px solid #ffe1a1; border-radius: 14px; background: linear-gradient(135deg, #ffe09a, #dc9827); box-shadow: 0 16px 45px rgba(220,152,39,.25); font-weight: 800; transition: transform 180ms ease, box-shadow 180ms ease; }
 .reveal-button:hover { transform: translateY(-2px); box-shadow: 0 20px 50px rgba(220,152,39,.38); }
@@ -227,11 +227,11 @@ input::placeholder { color: #8d776b; }
   .brand strong { max-width: 190px; }
   .brand small, .sound-button span { display: none; }
   .sound-button { width: 44px; padding: 0; }
-  .curtain-center { padding-inline: 4px; }
+  .curtain-center { width: 100%; max-width: 100%; padding-inline: 22px; }
   .curtain-blessing { margin-bottom: 12px; }
   .curtain-seal { width: 82px; margin-bottom: 20px; }
-  .curtain-center h1 { font-size: clamp(2.55rem, 13vw, 3.8rem); }
-  .overline { font-size: .68rem; letter-spacing: 0; }
+  .curtain-center h1 { font-size: clamp(2.1rem, 11cqi, 3rem); line-height: 1.16; }
+  .overline { max-width: 300px; margin-inline: auto; font-size: .68rem; line-height: 1.45; letter-spacing: 0; }
   .reveal-button { width: min(100%, 320px); }
 
   .hero { width: calc(100% - 20px); padding-top: 88px; }
@@ -282,11 +282,31 @@ input::placeholder { color: #8d776b; }
 }
 
 @media (max-width: 380px) {
+  .curtain-center { padding-inline: 18px; }
+  .curtain-center h1 { font-size: clamp(2rem, 10.5cqi, 2.55rem); }
+  .curtain-seal { width: 74px; }
   .brand strong { max-width: 160px; font-size: .82rem; }
   .hero h2 { font-size: 2.85rem; }
   .hero-visual { min-height: 270px; }
   .diyas { grid-template-columns: 1fr; }
   .diya { min-height: 148px; }
+}
+
+@media (max-width: 640px) and (max-height: 740px) {
+  .curtain-center { padding-block: 14px; }
+  .curtain-blessing { margin-bottom: 8px; font-size: .9rem; }
+  .curtain-seal { width: 70px; margin-bottom: 14px; }
+  .curtain-seal span { font-size: 1.55rem; }
+  .curtain-center h1 { margin-top: 6px; }
+  .curtain-copy { margin-top: 8px; font-size: .93rem; }
+  .reveal-button { min-height: 52px; margin-top: 16px; }
+}
+
+@supports not (font-size: 1cqi) {
+  .curtain-center h1 { font-size: clamp(2.15rem, 9vw, 4.75rem); }
+  @media (max-width: 640px) {
+    .curtain-center h1 { font-size: clamp(2rem, 10vw, 3rem); }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
