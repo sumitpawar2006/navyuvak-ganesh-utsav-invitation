@@ -110,7 +110,6 @@ if (page === 'dashboard') {
   websiteToggle.addEventListener('click', async () => {
     if (isSwitching || !['online', 'offline'].includes(currentStatus)) return;
     const action = currentStatus === 'online' ? 'pause' : 'resume';
-    const expectedStatus = action === 'resume' ? 'online' : 'offline';
     isSwitching = true;
     websiteToggle.disabled = true;
     websiteToggle.classList.add('is-busy');
@@ -135,7 +134,6 @@ if (page === 'dashboard') {
       websiteToggle.classList.remove('is-busy');
       websiteToggle.setAttribute('aria-busy', 'false');
       websiteToggle.disabled = currentStatus === 'unknown';
-      updateStatus(currentStatus === expectedStatus ? expectedStatus : currentStatus);
     }
   });
 
