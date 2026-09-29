@@ -4,6 +4,7 @@ const voiceButton = document.querySelector('#voiceButton');
 const voiceButtonText = document.querySelector('#voiceButtonText');
 const voiceStatus = document.querySelector('#voiceStatus');
 const shareWebsite = document.querySelector('#shareWebsite');
+const invitationAudio = document.querySelector('#invitationAudio');
 
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 let isSpeaking = false;
@@ -39,16 +40,9 @@ const setSpeakingState = (speaking, message) => {
 
 const invitationScript = 'गणपती बाप्पा मोरया! नवयुवक गणेश उत्सव मंडळ, म्हाडा कॉलनी यांच्या गणेशोत्सव दोन हजार सत्तावीस सोहळ्यास आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण. बाप्पांच्या दर्शनासाठी नक्की या. स्थळ, सार्वजनिक मैदान, म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक, नागपूर. कार्यक्रमाची तारीख आणि वेळ लवकरच कळवण्यात येईल.';
 
-const speakInvitation = () => {
+const speakWithDeviceVoice = () => {
   if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
-    voiceStatus.textContent = 'या फोनमध्ये आवाजाची सुविधा उपलब्ध नाही.';
-    voiceButton.disabled = true;
-    return;
-  }
-
-  if (isSpeaking) {
-    window.speechSynthesis.cancel();
-    setSpeakingState(false, 'आवाज थांबवला आहे.');
+    setSpeakingState(false, 'आवाज सुरू झाला नाही. कृपया पुन्हा बटण दाबा.');
     return;
   }
 
@@ -69,9 +63,44 @@ const speakInvitation = () => {
   window.speechSynthesis.speak(utterance);
 };
 
+const stopInvitation = () => {
+  invitationAudio.pause();
+  invitationAudio.currentTime = 0;
+  window.speechSynthesis?.cancel();
+  setSpeakingState(false, 'आवाज थांबवला आहे.');
+};
+
+const playInvitation = async () => {
+  if (isSpeaking) {
+    stopInvitation();
+    return;
+  }
+
+  window.speechSynthesis?.cancel();
+  invitationAudio.currentTime = 0;
+  invitationAudio.volume = 1;
+  voiceStatus.textContent = 'आमंत्रण सुरू होत आहे…';
+
+  try {
+    await invitationAudio.play();
+  } catch (error) {
+    speakWithDeviceVoice();
+  }
+};
+
+invitationAudio.addEventListener('playing', () => {
+  setSpeakingState(true, 'आमंत्रण मराठीत वाचले जात आहे…');
+});
+invitationAudio.addEventListener('ended', () => {
+  setSpeakingState(false, 'आमंत्रण पूर्ण झाले. गणपती बाप्पा मोरया!');
+});
+invitationAudio.addEventListener('error', () => {
+  if (!isSpeaking) voiceStatus.textContent = 'आवाज तयार होत आहे. पुन्हा बटण दाबा.';
+});
+
 openInvitation.addEventListener('click', () => {
   welcomeScreen.classList.add('leaving');
-  speakInvitation();
+  playInvitation();
   window.setTimeout(() => {
     welcomeScreen.hidden = true;
     document.body.classList.remove('welcome-active');
@@ -79,7 +108,7 @@ openInvitation.addEventListener('click', () => {
   }, reducedMotion ? 20 : 540);
 });
 
-voiceButton.addEventListener('click', speakInvitation);
+voiceButton.addEventListener('click', playInvitation);
 if ('speechSynthesis' in window) {
   window.speechSynthesis.addEventListener?.('voiceschanged', findIndianVoice, { once: true });
 }
@@ -104,4 +133,7 @@ shareWebsite.addEventListener('click', async () => {
   }
 });
 
-window.addEventListener('pagehide', () => window.speechSynthesis?.cancel());
+window.addEventListener('pagehide', () => {
+  invitationAudio.pause();
+  window.speechSynthesis?.cancel();
+});
