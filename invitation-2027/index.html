@@ -16,18 +16,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&family=Noto+Serif+Devanagari:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%237a170d'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='38' fill='%23ffd782'%3E%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A5%80%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/styles.css?v=20260929-8" />
+    <link rel="stylesheet" href="/styles.css?v=20260929-9" />
     <title>गणेशोत्सव २०२७ | सस्नेह आमंत्रण</title>
   </head>
   <body>
     <a class="skip-link" href="#mainContent">मुख्य आमंत्रणाकडे जा</a>
-    <audio id="invitationAudio" preload="auto" src="/assets/ganeshotsav-2027-marathi.mp3?v=20260929-8"></audio>
-
     <section class="welcome-screen" id="welcomeScreen" aria-labelledby="welcomeTitle">
       <div class="welcome-shade" aria-hidden="true"></div>
       <div class="welcome-content">
         <p class="welcome-prayer">॥ श्री गणेशाय नमः ॥</p>
-        <span class="welcome-seal" aria-hidden="true">श्री</span>
+        <span class="welcome-seal" aria-hidden="true"><span>श्री</span></span>
         <p class="welcome-invite">सस्नेह आमंत्रण</p>
         <h1 id="welcomeTitle">गणेशोत्सव <strong>२०२७</strong></h1>
         <div class="welcome-mandal">
@@ -73,6 +71,9 @@
             <svg class="stop-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
             <span id="voiceButtonText">आमंत्रण ऐका</span>
           </button>
+          <audio id="invitationAudio" controls controlslist="nodownload noplaybackrate" preload="auto" playsinline aria-label="मराठी आमंत्रणाचा आवाज">
+            <source src="/assets/ganeshotsav-2027-marathi.mp3?v=20260929-9" type="audio/mpeg" />
+          </audio>
         </section>
 
         <section class="message-section" aria-labelledby="messageTitle">
@@ -129,6 +130,6 @@
       </article>
     </main>
 
-    <script src="/app.js?v=20260929-8" defer></script>
+    <script src="/app.js?v=20260929-9" defer></script>
   </body>
 </html>

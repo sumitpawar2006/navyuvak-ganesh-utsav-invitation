@@ -94,6 +94,11 @@ invitationAudio.addEventListener('playing', () => {
 invitationAudio.addEventListener('ended', () => {
   setSpeakingState(false, 'आमंत्रण पूर्ण झाले. गणपती बाप्पा मोरया!');
 });
+invitationAudio.addEventListener('pause', () => {
+  if (!invitationAudio.ended && invitationAudio.currentTime > 0) {
+    setSpeakingState(false, 'आवाज थांबवला आहे.');
+  }
+});
 invitationAudio.addEventListener('error', () => {
   if (!isSpeaking) voiceStatus.textContent = 'आवाज तयार होत आहे. पुन्हा बटण दाबा.';
 });
