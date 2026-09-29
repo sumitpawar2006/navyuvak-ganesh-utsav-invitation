@@ -58,10 +58,17 @@ export const renderDashboardPage = () => document(`
 
         <section class="card controls-card" aria-labelledby="controlsTitle">
           <div class="section-header"><div><span class="eyebrow">PRIVATE PRODUCTION CONTROL</span><h2 id="controlsTitle">Website controls</h2><p>Switch safely between the invitation and the professional closing page.</p></div></div>
-          <div class="control-grid">
-            <button id="resumeButton" class="control-button resume" type="button" data-action="resume" disabled>${powerIcon}<span>Turn website ON</span></button>
-            <button id="pauseButton" class="control-button pause" type="button" data-action="pause" disabled>${powerIcon}<span>Turn website OFF</span></button>
-          </div>
+          <button id="websiteToggle" class="website-toggle" type="button" role="switch" aria-checked="false" aria-busy="true" disabled>
+            <span class="toggle-copy">
+              <strong id="toggleTitle">Checking website…</strong>
+              <small id="toggleHint">Please wait while the live state is confirmed.</small>
+            </span>
+            <span class="toggle-track" aria-hidden="true">
+              <span class="toggle-label toggle-label-off">OFF</span>
+              <span class="toggle-label toggle-label-on">ON</span>
+              <span class="toggle-thumb">${powerIcon}</span>
+            </span>
+          </button>
           <p class="action-message" id="actionMessage" role="status" aria-live="polite">Waiting for current status…</p>
         </section>
       </div>
@@ -84,13 +91,4 @@ export const renderDashboardPage = () => document(`
         </section>
       </aside>
     </div>
-  </main>
-
-  <div id="confirmLayer" class="modal-layer" hidden>
-    <section class="card modal" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmCopy">
-      <div class="modal-icon" id="modalIcon">${powerIcon}</div>
-      <h2 id="confirmTitle">Confirm website change</h2>
-      <p id="confirmCopy"></p>
-      <div class="modal-actions"><button id="cancelButton" class="secondary-button" type="button">Cancel</button><button id="confirmButton" class="primary-button" type="button">Confirm</button></div>
-    </section>
-  </div>`, 'dashboard');
+  </main>`, 'dashboard');

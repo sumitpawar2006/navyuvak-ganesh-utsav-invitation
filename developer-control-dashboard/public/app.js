@@ -57,15 +57,11 @@ if (page === 'dashboard') {
   const statusTitle = document.querySelector('#statusTitle');
   const statusCopy = document.querySelector('#statusCopy');
   const message = document.querySelector('#actionMessage');
-  const resumeButton = document.querySelector('#resumeButton');
-  const pauseButton = document.querySelector('#pauseButton');
-  const confirmLayer = document.querySelector('#confirmLayer');
-  const confirmTitle = document.querySelector('#confirmTitle');
-  const confirmCopy = document.querySelector('#confirmCopy');
-  const confirmButton = document.querySelector('#confirmButton');
-  const cancelButton = document.querySelector('#cancelButton');
+  const websiteToggle = document.querySelector('#websiteToggle');
+  const toggleTitle = document.querySelector('#toggleTitle');
+  const toggleHint = document.querySelector('#toggleHint');
   let currentStatus = 'unknown';
-  let pendingAction = null;
+  let isSwitching = false;
   const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
   const updateStatus = (status) => {
@@ -78,8 +74,14 @@ if (page === 'dashboard') {
       : status === 'offline'
         ? 'Visitors see the branded Marathi thank-you page. No error page or developer control is visible.'
         : 'The current production state could not be confirmed. Refresh before making a change.';
-    resumeButton.disabled = status !== 'offline';
-    pauseButton.disabled = status !== 'online';
+    const online = status === 'online';
+    websiteToggle.classList.toggle('is-on', online);
+    websiteToggle.setAttribute('aria-checked', String(online));
+    websiteToggle.setAttribute('aria-label', online ? 'Website is on. Tap to turn it off.' : 'Website is off. Tap to turn it on.');
+    websiteToggle.disabled = isSwitching || status === 'unknown';
+    websiteToggle.setAttribute('aria-busy', String(isSwitching));
+    toggleTitle.textContent = online ? 'Website is ON' : status === 'offline' ? 'Website is OFF' : 'Website state unavailable';
+    toggleHint.textContent = online ? 'Tap once to show the closing page.' : status === 'offline' ? 'Tap once to show the invitation.' : 'Refresh the dashboard and try again.';
     message.textContent = status === 'online' ? 'The full invitation is currently visible.' : status === 'offline' ? 'The professional closing page is currently visible.' : 'Refresh the page to check again.';
   };
 
@@ -94,7 +96,7 @@ if (page === 'dashboard') {
   };
 
   const waitForPublicStatus = async (expectedStatus) => {
-    for (let attempt = 0; attempt < 12; attempt += 1) {
+    for (let attempt = 0; attempt < 20; attempt += 1) {
       const data = await request(`/api/status?check=${Date.now()}`);
       if (data.status === expectedStatus) {
         updateStatus(data.status);
@@ -105,57 +107,35 @@ if (page === 'dashboard') {
     throw new Error('Vercel is taking longer than expected to update the public link.');
   };
 
-  const openConfirmation = (action) => {
-    pendingAction = action;
-    const turningOn = action === 'resume';
-    confirmTitle.textContent = turningOn ? 'Turn website ON?' : 'Turn website OFF?';
-    confirmCopy.textContent = turningOn
-      ? 'Visitors will see the full invitation website again.'
-      : 'Visitors will see the professional Marathi thank-you page. No Vercel error will appear.';
-    confirmButton.textContent = turningOn ? 'Yes, turn it ON' : 'Yes, turn it OFF';
-    confirmButton.classList.toggle('danger', !turningOn);
-    confirmLayer.hidden = false;
-    confirmButton.focus();
-  };
-
-  const closeConfirmation = () => {
-    confirmLayer.hidden = true;
-    const returnButton = pendingAction === 'resume' ? resumeButton : pauseButton;
-    pendingAction = null;
-    returnButton.focus();
-  };
-
-  resumeButton.addEventListener('click', () => openConfirmation('resume'));
-  pauseButton.addEventListener('click', () => openConfirmation('pause'));
-  cancelButton.addEventListener('click', closeConfirmation);
-  confirmLayer.addEventListener('click', (event) => { if (event.target === confirmLayer) closeConfirmation(); });
-  document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && !confirmLayer.hidden) closeConfirmation(); });
-
-  confirmButton.addEventListener('click', async () => {
-    const action = pendingAction;
-    if (!action) return;
-    confirmButton.disabled = true;
-    confirmButton.textContent = action === 'resume' ? 'Turning ON…' : 'Turning OFF…';
+  websiteToggle.addEventListener('click', async () => {
+    if (isSwitching || !['online', 'offline'].includes(currentStatus)) return;
+    const action = currentStatus === 'online' ? 'pause' : 'resume';
+    const expectedStatus = action === 'resume' ? 'online' : 'offline';
+    isSwitching = true;
+    websiteToggle.disabled = true;
+    websiteToggle.classList.add('is-busy');
+    websiteToggle.setAttribute('aria-busy', 'true');
+    toggleTitle.textContent = action === 'resume' ? 'Turning website ON…' : 'Turning website OFF…';
+    toggleHint.textContent = 'Waiting for the public website to confirm the change.';
     message.classList.remove('error');
     message.textContent = 'Sending secure request to Vercel…';
     try {
       const data = await request('/api/control', { method: 'POST', body: JSON.stringify({ action }) });
-      confirmLayer.hidden = true;
-      resumeButton.disabled = true;
-      pauseButton.disabled = true;
       message.classList.remove('error');
       message.textContent = 'Change accepted. Waiting for the public link to update…';
       await waitForPublicStatus(data.status);
       message.classList.remove('error');
       message.textContent = data.status === 'online' ? 'Invitation is now live.' : 'Professional closing page is now live.';
     } catch (error) {
-      confirmLayer.hidden = true;
       await loadStatus();
       message.classList.add('error');
       message.textContent = `${error.message} Please try again.`;
     } finally {
-      pendingAction = null;
-      confirmButton.disabled = false;
+      isSwitching = false;
+      websiteToggle.classList.remove('is-busy');
+      websiteToggle.setAttribute('aria-busy', 'false');
+      websiteToggle.disabled = currentStatus === 'unknown';
+      updateStatus(currentStatus === expectedStatus ? expectedStatus : currentStatus);
     }
   });
 
