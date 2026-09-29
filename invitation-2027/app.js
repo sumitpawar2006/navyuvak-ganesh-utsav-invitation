@@ -11,25 +11,6 @@ let isSpeaking = false;
 
 document.body.classList.add('welcome-active');
 
-const findIndianVoice = () => {
-  if (!('speechSynthesis' in window)) return null;
-  const voices = window.speechSynthesis.getVoices();
-  const languageRank = (voice) => {
-    const language = voice.lang.toLowerCase();
-    if (language === 'mr-in' || language.startsWith('mr')) return 0;
-    if (language === 'hi-in' || language.startsWith('hi')) return 1;
-    if (language === 'en-in') return 2;
-    if (language.endsWith('-in')) return 3;
-    return 4;
-  };
-  const warmVoice = /(female|woman|heera|swara|kalpana|lekha|veena|raveena|neerja|aditi)/i;
-  return voices.filter((voice) => languageRank(voice) < 4).sort((a, b) => {
-    const languageDifference = languageRank(a) - languageRank(b);
-    if (languageDifference !== 0) return languageDifference;
-    return Number(warmVoice.test(b.name)) - Number(warmVoice.test(a.name));
-  })[0] ?? null;
-};
-
 const setSpeakingState = (speaking, message) => {
   isSpeaking = speaking;
   voiceButton.classList.toggle('is-speaking', speaking);
@@ -38,35 +19,9 @@ const setSpeakingState = (speaking, message) => {
   if (message) voiceStatus.textContent = message;
 };
 
-const invitationScript = 'गणपती बाप्पा मोरया! नवयुवक गणेश उत्सव मंडळ, म्हाडा कॉलनी यांच्या गणेशोत्सव दोन हजार सत्तावीस सोहळ्यास आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण. बाप्पांच्या दर्शनासाठी नक्की या. स्थळ, सार्वजनिक मैदान, म्हाडा कॉलनी, इलेक्ट्रॉनिक झोन चौक, नागपूर. कार्यक्रमाची तारीख आणि वेळ लवकरच कळवण्यात येईल.';
-
-const speakWithDeviceVoice = () => {
-  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
-    setSpeakingState(false, 'आवाज सुरू झाला नाही. कृपया पुन्हा बटण दाबा.');
-    return;
-  }
-
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(invitationScript);
-  const selectedVoice = findIndianVoice();
-  if (selectedVoice) utterance.voice = selectedVoice;
-  utterance.lang = selectedVoice?.lang || 'mr-IN';
-  utterance.rate = 0.86;
-  utterance.pitch = 1.02;
-  utterance.volume = 1;
-  utterance.onstart = () => setSpeakingState(true, 'आमंत्रण मराठीत वाचले जात आहे…');
-  utterance.onend = () => setSpeakingState(false, 'आमंत्रण पूर्ण झाले. गणपती बाप्पा मोरया!');
-  utterance.onerror = (event) => {
-    if (event.error === 'canceled' || event.error === 'interrupted') return;
-    setSpeakingState(false, 'आवाज सुरू झाला नाही. पुन्हा बटण दाबा.');
-  };
-  window.speechSynthesis.speak(utterance);
-};
-
 const stopInvitation = () => {
   invitationAudio.pause();
   invitationAudio.currentTime = 0;
-  window.speechSynthesis?.cancel();
   setSpeakingState(false, 'आवाज थांबवला आहे.');
 };
 
@@ -76,7 +31,6 @@ const playInvitation = async () => {
     return;
   }
 
-  window.speechSynthesis?.cancel();
   invitationAudio.currentTime = 0;
   invitationAudio.volume = 1;
   voiceStatus.textContent = 'आमंत्रण सुरू होत आहे…';
@@ -84,7 +38,7 @@ const playInvitation = async () => {
   try {
     await invitationAudio.play();
   } catch (error) {
-    speakWithDeviceVoice();
+    setSpeakingState(false, 'आवाज सुरू झाला नाही. कृपया पुन्हा बटण दाबा.');
   }
 };
 
@@ -114,9 +68,6 @@ openInvitation.addEventListener('click', () => {
 });
 
 voiceButton.addEventListener('click', playInvitation);
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.addEventListener?.('voiceschanged', findIndianVoice, { once: true });
-}
 
 shareWebsite.addEventListener('click', async () => {
   const title = 'गणेशोत्सव २०२७ | सस्नेह आमंत्रण';
@@ -140,5 +91,4 @@ shareWebsite.addEventListener('click', async () => {
 
 window.addEventListener('pagehide', () => {
   invitationAudio.pause();
-  window.speechSynthesis?.cancel();
 });
