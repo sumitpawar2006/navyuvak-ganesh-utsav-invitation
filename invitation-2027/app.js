@@ -33,7 +33,7 @@ const setSpeakingState = (speaking, message) => {
   isSpeaking = speaking;
   voiceButton.classList.toggle('is-speaking', speaking);
   voiceButton.setAttribute('aria-pressed', String(speaking));
-  voiceButtonText.textContent = speaking ? 'आवाज थांबवा' : 'आवाज पुन्हा ऐका';
+  voiceButtonText.textContent = speaking ? 'आवाज थांबवा' : 'आमंत्रण पुन्हा ऐका';
   if (message) voiceStatus.textContent = message;
 };
 

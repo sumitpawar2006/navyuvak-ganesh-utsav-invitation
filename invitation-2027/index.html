@@ -16,7 +16,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;500;600;700;800&family=Noto+Serif+Devanagari:wght@600;700;800&display=swap" rel="stylesheet" />
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%237a170d'/%3E%3Ctext x='32' y='43' text-anchor='middle' font-size='38' fill='%23ffd782'%3E%E0%A4%B6%E0%A5%8D%E0%A4%B0%E0%A5%80%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="/styles.css?v=20260929-6" />
+    <link rel="stylesheet" href="/styles.css?v=20260929-7" />
     <title>गणेशोत्सव २०२७ | सस्नेह आमंत्रण</title>
   </head>
   <body>
@@ -25,8 +25,9 @@
     <section class="welcome-screen" id="welcomeScreen" aria-labelledby="welcomeTitle">
       <div class="welcome-shade" aria-hidden="true"></div>
       <div class="welcome-content">
-        <p>गणपती बाप्पा मोरया!</p>
+        <p class="welcome-prayer">॥ श्री गणेशाय नमः ॥</p>
         <span class="welcome-seal" aria-hidden="true">श्री</span>
+        <p class="welcome-invite">सस्नेह आमंत्रण</p>
         <h1 id="welcomeTitle">गणेशोत्सव <strong>२०२७</strong></h1>
         <div class="welcome-mandal">
           <strong>नवयुवक गणेश उत्सव मंडळ</strong>
@@ -36,52 +37,57 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/></svg>
           आमंत्रण उघडा व ऐका
         </button>
-        <small>या बटणावर स्पर्श करा</small>
+        <small>एकदा स्पर्श करा — आमंत्रण मराठीत ऐकू येईल</small>
       </div>
     </section>
 
     <main id="mainContent">
       <article class="invitation-card">
-        <header class="simple-header">
-          <span class="brand-seal" aria-hidden="true">श्री</span>
-          <div>
+        <header class="invitation-hero" aria-labelledby="mainTitle">
+          <div class="hero-brand">
             <strong>नवयुवक गणेश उत्सव मंडळ</strong>
             <span>म्हाडा कॉलनी, नागपूर</span>
           </div>
+          <div class="hero-art-wrap">
+            <img class="hero-art" src="/assets/mandal-ceremonial-2027.jpg" width="1254" height="590" alt="सुवर्ण त्रिशूल आणि लाल ध्वजाची मंगलमय सजावट" fetchpriority="high" />
+          </div>
+          <div class="hero-copy">
+            <p>॥ श्री गणेशाय नमः ॥</p>
+            <span class="invite-label">सस्नेह आमंत्रण</span>
+            <h1 id="mainTitle" tabindex="-1">गणेशोत्सव <strong>२०२७</strong></h1>
+            <p class="invite-line">आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण</p>
+          </div>
         </header>
-
-        <section class="invitation-hero" aria-labelledby="mainTitle">
-          <p>॥ श्री गणेशाय नमः ॥</p>
-          <h2 id="mainTitle" tabindex="-1">गणेशोत्सव <strong>२०२७</strong></h2>
-          <span class="invite-label">सस्नेह आमंत्रण</span>
-          <p class="invite-line">आपणास व आपल्या परिवारास मनःपूर्वक आमंत्रण</p>
-          <img src="/assets/mandal-ceremonial-2027.jpg" width="1254" height="590" alt="सुवर्ण त्रिशूल आणि लाल ध्वजाची मंगलमय सजावट" fetchpriority="high" />
-        </section>
 
         <section class="listen-section" aria-labelledby="listenTitle">
           <div class="listen-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Z"/><path d="M15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/></svg>
           </div>
           <div class="listen-copy">
-            <h3 id="listenTitle">आमंत्रण ऐका</h3>
-            <p id="voiceStatus" role="status">मराठीत आमंत्रण ऐकण्यासाठी खालील बटण दाबा.</p>
+            <h2 id="listenTitle">आमंत्रण ऐका</h2>
+            <p id="voiceStatus" role="status">हे बटण दाबा — संपूर्ण आमंत्रण मराठीत ऐकू येईल.</p>
           </div>
           <button id="voiceButton" type="button" aria-pressed="false">
             <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7V5Z"/></svg>
             <svg class="stop-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-            <span id="voiceButtonText">आवाज पुन्हा ऐका</span>
+            <span id="voiceButtonText">आमंत्रण ऐका</span>
           </button>
         </section>
 
         <section class="message-section" aria-labelledby="messageTitle">
-          <p>गणपती बाप्पा मोरया!</p>
-          <h3 id="messageTitle">आपली उपस्थिती हाच आमचा आनंद</h3>
+          <p class="blessing">गणपती बाप्पा मोरया!</p>
+          <h2 id="messageTitle">आपली उपस्थिती<br />हाच आमचा आनंद</h2>
           <div class="ornament" aria-hidden="true"><span></span><b>श्री</b><span></span></div>
           <p class="main-message">नवयुवक गणेश उत्सव मंडळ, म्हाडा कॉलनी यांच्या गणेशोत्सव २०२७ सोहळ्यास आपण व आपल्या परिवाराने आवर्जून उपस्थित राहावे, ही नम्र विनंती.</p>
           <p class="notice">कार्यक्रमाची तारीख आणि वेळ लवकरच कळवण्यात येईल.</p>
         </section>
 
         <section class="details-section" aria-label="आमंत्रणाची माहिती">
+          <div class="details-heading">
+            <span aria-hidden="true"></span>
+            <strong>आमंत्रणाची माहिती</strong>
+            <span aria-hidden="true"></span>
+          </div>
           <article class="detail-row">
             <span class="detail-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -122,6 +128,6 @@
       </article>
     </main>
 
-    <script src="/app.js?v=20260929-6" defer></script>
+    <script src="/app.js?v=20260929-7" defer></script>
   </body>
 </html>
