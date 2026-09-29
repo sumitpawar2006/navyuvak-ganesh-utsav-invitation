@@ -66,6 +66,7 @@ if (page === 'dashboard') {
   const cancelButton = document.querySelector('#cancelButton');
   let currentStatus = 'unknown';
   let pendingAction = null;
+  const wait = (milliseconds) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
   const updateStatus = (status) => {
     currentStatus = status;
@@ -90,6 +91,18 @@ if (page === 'dashboard') {
       if (error.message === 'Authentication required.') window.location.replace('/');
       else updateStatus('unknown');
     }
+  };
+
+  const waitForPublicStatus = async (expectedStatus) => {
+    for (let attempt = 0; attempt < 12; attempt += 1) {
+      const data = await request(`/api/status?check=${Date.now()}`);
+      if (data.status === expectedStatus) {
+        updateStatus(data.status);
+        return;
+      }
+      await wait(1500);
+    }
+    throw new Error('Vercel is taking longer than expected to update the public link.');
   };
 
   const openConfirmation = (action) => {
@@ -123,11 +136,16 @@ if (page === 'dashboard') {
     if (!action) return;
     confirmButton.disabled = true;
     confirmButton.textContent = action === 'resume' ? 'Turning ON…' : 'Turning OFF…';
+    message.classList.remove('error');
     message.textContent = 'Sending secure request to Vercel…';
     try {
       const data = await request('/api/control', { method: 'POST', body: JSON.stringify({ action }) });
       confirmLayer.hidden = true;
-      updateStatus(data.status);
+      resumeButton.disabled = true;
+      pauseButton.disabled = true;
+      message.classList.remove('error');
+      message.textContent = 'Change accepted. Waiting for the public link to update…';
+      await waitForPublicStatus(data.status);
       message.classList.remove('error');
       message.textContent = data.status === 'online' ? 'Invitation is now live.' : 'Professional closing page is now live.';
     } catch (error) {
