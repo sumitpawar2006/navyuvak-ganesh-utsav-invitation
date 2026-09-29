@@ -96,6 +96,7 @@ label { display: block; margin-bottom: 8px; font-size: 0.88rem; font-weight: 800
 .control-button.resume:hover:not(:disabled) { background: linear-gradient(180deg, #65e5a1, #3cd486); }
 .control-button.pause:hover:not(:disabled) { background: rgba(255, 116, 116, 0.16); }
 .action-message { min-height: 1.4em; margin: 15px 0 0; color: var(--muted); font-size: 0.84rem; }
+.action-message.error { color: #ffb5b5; font-weight: 700; }
 .info-icon { width: 44px; height: 44px; margin-bottom: 18px; color: #a8d9ff; border: 1px solid var(--border); background: #0a1627; }
 .info-card ul { display: grid; gap: 10px; margin: 17px 0 0; padding: 0; list-style: none; color: var(--muted); font-size: 0.88rem; }
 .info-card li { position: relative; padding-left: 18px; }

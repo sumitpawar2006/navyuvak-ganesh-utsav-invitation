@@ -59,10 +59,21 @@ export const isAuthenticated = (request) => {
 };
 
 export const hasSameOrigin = (request) => {
-  const origin = request.headers.origin;
-  const host = request.headers['x-forwarded-host'] ?? request.headers.host;
-  if (!origin || !host) return false;
-  return origin === `https://${host}` || origin === `http://${host}`;
+  try {
+    const origin = new URL(request.headers.origin);
+    const normalizeHost = (value) => String(value ?? '').split(',')[0].trim().toLowerCase();
+    const trustedHosts = new Set([
+      'invitation-private-control.vercel.app',
+      normalizeHost(request.headers.host),
+      normalizeHost(request.headers['x-forwarded-host']),
+      normalizeHost(process.env.VERCEL_URL),
+    ].filter(Boolean));
+
+    if (!trustedHosts.has(origin.host.toLowerCase())) return false;
+    return origin.protocol === 'https:' || (origin.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(origin.hostname));
+  } catch {
+    return false;
+  }
 };
 
 export const sendJson = (response, status, body) => {

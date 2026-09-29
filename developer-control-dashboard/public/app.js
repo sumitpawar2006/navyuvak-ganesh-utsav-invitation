@@ -128,11 +128,13 @@ if (page === 'dashboard') {
       const data = await request('/api/control', { method: 'POST', body: JSON.stringify({ action }) });
       confirmLayer.hidden = true;
       updateStatus(data.status);
+      message.classList.remove('error');
       message.textContent = data.status === 'online' ? 'Invitation is now live.' : 'Professional closing page is now live.';
     } catch (error) {
-      message.textContent = error.message;
       confirmLayer.hidden = true;
       await loadStatus();
+      message.classList.add('error');
+      message.textContent = `${error.message} Please try again.`;
     } finally {
       pendingAction = null;
       confirmButton.disabled = false;
